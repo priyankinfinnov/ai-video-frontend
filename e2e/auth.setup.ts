@@ -5,7 +5,30 @@ export const TEST_USER = {
   password: 'Password123!',
 };
 
+export async function ensureTestUserExists() {
+  try {
+    const signupRes = await fetch('http://localhost:6001/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Playwright Tester',
+        email: TEST_USER.email,
+        password: TEST_USER.password,
+      }),
+    });
+    const signupData = await signupRes.json();
+    if (signupData?.verificationToken) {
+      await fetch(
+        `http://localhost:6001/api/auth/verify?token=${signupData.verificationToken}`
+      );
+    }
+  } catch {
+    // If user already exists or signup fails, proceed to login
+  }
+}
+
 export async function loginTestUser(page: Page) {
+  await ensureTestUserExists();
   await page.goto('/login');
   await expect(page.locator('input#email')).toBeVisible();
 
@@ -17,3 +40,4 @@ export async function loginTestUser(page: Page) {
   await page.waitForURL(/\/dashboard\/?$/);
   await expect(page.locator('h1')).toHaveText('Personas');
 }
+

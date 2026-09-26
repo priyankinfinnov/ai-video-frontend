@@ -1,0 +1,280 @@
+import { test, expect } from '@playwright/test';
+import { loginTestUser } from './auth.setup';
+
+test.describe('Projects & Shorts Management E2E', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginTestUser(page);
+  });
+
+  test('E2E-PROJ-01: Navigate to Projects & switch tabs between Video Projects and Short Projects', async ({
+    page,
+  }) => {
+    // 1. Click Projects in the left sidebar
+    const navProjects = page.getByTestId('nav-projects');
+    await expect(navProjects).toBeVisible();
+    await navProjects.click();
+
+    // Verify URL and Headers
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+    await expect(page.locator('h1')).toHaveText('Video Projects');
+
+    // Verify Tab pills
+    const tabsContainer = page.getByTestId('project-view-tabs');
+    await expect(tabsContainer).toBeVisible();
+    const tabVideo = page.getByTestId('tab-video-projects');
+    const tabShorts = page.getByTestId('tab-short-projects');
+    await expect(tabVideo).toBeVisible();
+    await expect(tabShorts).toBeVisible();
+
+    // Verify Video Projects table headers
+    const headers = page.locator('th');
+    await expect(headers.nth(0)).toContainText('Actions');
+    await expect(headers.nth(1)).toContainText('ID');
+    await expect(headers.nth(2)).toContainText('Prompt / Concept');
+
+    // 2. Switch to Short Projects tab via tab button
+    await tabShorts.click();
+    await expect(page).toHaveURL(/.*tab=shorts/);
+    await expect(page.locator('h1')).toHaveText('Short Projects');
+    await expect(page.getByTestId('add-shorts-button')).toBeVisible();
+
+    // Verify Shorts table headers
+    await expect(headers.nth(0)).toContainText('Actions');
+    await expect(headers.nth(1)).toContainText('ID');
+    await expect(headers.nth(2)).toContainText('Source Project');
+
+    // 3. Switch back to Video Projects via Sidebar navigation
+    await navProjects.click();
+    await expect(page.locator('h1')).toHaveText('Video Projects');
+    await expect(page.getByTestId('add-project-button')).toBeVisible();
+  });
+
+  test('E2E-PROJ-02: Create video project and verify rendering in table', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const uniquePrompt = `Autonomous AI Agents and Swarm Intelligence ${timestamp}`;
+
+    // Navigate to projects
+    await page.getByTestId('nav-projects').click();
+    await expect(page.locator('h1')).toHaveText('Video Projects');
+
+    // Click Add Project
+    await page.getByTestId('add-project-button').click();
+    await expect(page).toHaveURL(/.*project-form/);
+    await expect(page.locator('h1')).toHaveText('Create New Video Project');
+
+    // Fill Prompt
+    await page.locator('textarea#project-prompt').fill(uniquePrompt);
+
+    // Duration
+    await page.locator('input#project-length').fill('4.5');
+
+    // Select format / type
+    const typeTrigger = page.getByTestId('select-type-trigger');
+    await typeTrigger.click();
+    await page.getByRole('option', { name: 'Full AI Generated Video' }).click();
+
+    // Select language
+    const langTrigger = page.getByTestId('select-language-trigger');
+    await langTrigger.click();
+    await page.getByRole('option', { name: 'English' }).click();
+
+    // Mark as published with link
+    await page.locator('button#project-is-published').click();
+    const linkInput = page.getByTestId('project-published-link-input');
+    await expect(linkInput).toBeVisible();
+    await linkInput.fill('https://youtube.com/watch?v=sample-video-link');
+
+    // Submit form
+    await page.getByTestId('submit-project-button').click();
+
+    // Wait for redirect to /dashboard/projects
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+    await expect(page.locator('h1')).toHaveText('Video Projects');
+
+    // Assert row appears in table with expected content
+    const projectRow = page.locator('tr', { hasText: uniquePrompt });
+    await expect(projectRow).toBeVisible();
+    await expect(projectRow.getByText('Full AI Video')).toBeVisible();
+    await expect(projectRow.getByText('ENGLISH • 4.5m')).toBeVisible();
+    await expect(projectRow.getByText('Published')).toBeVisible();
+  });
+
+  test('E2E-PROJ-03: Edit video project and update publishing details', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const uniquePrompt = `Robotics in 2040 ${timestamp}`;
+
+    // Create project first
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(uniquePrompt);
+    await page.locator('input#project-length').fill('3.0');
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // Locate row and click edit pencil icon
+    const row = page.locator('tr', { hasText: uniquePrompt });
+    await expect(row).toBeVisible();
+    const editBtn = row.locator('a[title="Edit Project"]');
+    await expect(editBtn).toBeVisible();
+    await editBtn.click();
+
+    // Verify edit form loaded
+    await expect(page).toHaveURL(/.*projectId=/);
+    await expect(page.locator('h1')).toHaveText('Edit Video Project');
+
+    // Update published status and link
+    const publishedCheckbox = page.locator('button#project-is-published');
+    await publishedCheckbox.click();
+    const linkInput = page.getByTestId('project-published-link-input');
+    await expect(linkInput).toBeVisible();
+    await linkInput.fill('https://youtube.com/watch?v=robotics-updated');
+
+    // Submit update
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // Verify updated status in table
+    const updatedRow = page.locator('tr', { hasText: uniquePrompt });
+    await expect(updatedRow).toBeVisible();
+    await expect(updatedRow.getByText('Published')).toBeVisible();
+  });
+
+  test('E2E-PROJ-04: Clone video project pre-fills form without saving until submit', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const sourcePrompt = `Quantum Encryption ${timestamp}`;
+
+    // Create source project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(sourcePrompt);
+    await page.locator('input#project-length').fill('2.5');
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // Click clone button on row
+    const row = page.locator('tr', { hasText: sourcePrompt });
+    await expect(row).toBeVisible();
+    const cloneBtn = row.locator('a[title="Clone Project"]');
+    await expect(cloneBtn).toBeVisible();
+    await cloneBtn.click();
+
+    // Verify form pre-filled with (Copy)
+    await expect(page).toHaveURL(/.*cloneId=/);
+    await expect(page.locator('h1')).toHaveText('Clone Video Project');
+    const promptInput = page.locator('textarea#project-prompt');
+    await expect(promptInput).toHaveValue(`${sourcePrompt} (Copy)`);
+
+    // Submit clone
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // Verify both original and copy are rendered
+    await expect(page.locator('tr', { hasText: sourcePrompt }).first()).toBeVisible();
+    await expect(page.locator('tr', { hasText: `${sourcePrompt} (Copy)` })).toBeVisible();
+  });
+
+  test('E2E-PROJ-05: Filter projects by search query', async ({ page }) => {
+    const timestamp = Date.now();
+    const targetPrompt = `SearchTargetAlpha ${timestamp}`;
+    const otherPrompt = `SearchTargetBeta ${timestamp}`;
+
+    // Create target project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(targetPrompt);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // Create other project
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(otherPrompt);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // Search for Alpha
+    const searchInput = page.locator('input[placeholder*="Search"]');
+    await searchInput.fill(`SearchTargetAlpha ${timestamp}`);
+
+    // Wait for debounced search filter
+    await expect(page.locator('tr', { hasText: targetPrompt })).toBeVisible();
+    await expect(page.locator('tr', { hasText: otherPrompt })).not.toBeVisible();
+
+    // Clear search
+    await page.locator('button[aria-label="Clear search"]').click();
+    await expect(page.locator('tr', { hasText: targetPrompt })).toBeVisible();
+    await expect(page.locator('tr', { hasText: otherPrompt })).toBeVisible();
+  });
+
+  test('E2E-PROJ-06: Create Shorts Project from Video Project row and verify in Shorts table', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const sourcePrompt = `Viral Tech News ${timestamp}`;
+
+    // 1. Create a video project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(sourcePrompt);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // 2. Click the scissors action button on the project row
+    const projectRow = page.locator('tr', { hasText: sourcePrompt });
+    await expect(projectRow).toBeVisible();
+    const createShortsBtn = projectRow.locator('a[title="Create Shorts from Project"]');
+    await expect(createShortsBtn).toBeVisible();
+    await createShortsBtn.click();
+
+    // 3. Verify Shorts generation form
+    await expect(page).toHaveURL(/.*shorts-form\?videoProjectId=/);
+    await expect(page.locator('h1')).toHaveText('Generate Shorts Project');
+
+    // 4. Submit shorts generation
+    await page.getByTestId('submit-shorts-button').click();
+
+    // 5. Verify redirection to Short Projects tab
+    await expect(page).toHaveURL(/.*tab=shorts/);
+    await expect(page.locator('h1')).toHaveText('Short Projects');
+
+    // 6. Verify row in Short Projects table
+    const shortsRow = page.locator('tr', { hasText: sourcePrompt });
+    await expect(shortsRow).toBeVisible();
+    await expect(shortsRow.getByText('Pending')).toBeVisible();
+  });
+
+  test('E2E-PROJ-07: Delete video project with confirmation cleanup', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const promptToDelete = `Ephemeral Project ${timestamp}`;
+
+    // Create project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(promptToDelete);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    const row = page.locator('tr', { hasText: promptToDelete });
+    await expect(row).toBeVisible();
+
+    // Accept dialog
+    page.once('dialog', async (dialog) => {
+      expect(dialog.message()).toContain('Are you sure you want to delete this video project?');
+      await dialog.accept();
+    });
+
+    // Click delete trash icon
+    const deleteBtn = row.locator('button[title="Delete Project"]');
+    await deleteBtn.click();
+
+    // Assert row removed
+    await expect(page.locator('tr', { hasText: promptToDelete })).not.toBeVisible();
+  });
+});

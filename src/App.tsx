@@ -11,7 +11,11 @@ import {
   VerifyEmailPage,
   PersonaPage,
   PersonaFormPage,
+  ProjectsPage,
+  ProjectFormPage,
+  ShortsFormPage,
 } from './pages';
+
 
 import { ProtectedRoutes } from './components';
 import { useAppDispatch, useAppSelector } from './store/store';
@@ -91,8 +95,13 @@ const App = () => {
           <Route index element={<PersonaPage />} />
           <Route path='personas' element={<PersonaPage />} />
           <Route path='persona-form' element={<PersonaFormPage />} />
+          <Route path='projects' element={<ProjectsPage />} />
+          <Route path='shorts' element={<ProjectsPage defaultTab='shorts' />} />
+          <Route path='project-form' element={<ProjectFormPage />} />
+          <Route path='shorts-form' element={<ShortsFormPage />} />
           <Route path='*' element={<ErrorPage />} />
         </Route>
+
 
         {/* public routes */}
         <Route path='/' element={<LandingPage />} />
