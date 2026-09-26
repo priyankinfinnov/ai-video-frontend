@@ -8,9 +8,9 @@ const useNavigateIfRegistered = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // if token is present in store, and user comes to login or signup, navigate him to home
+    // if token is present in store, and user comes to login or signup, navigate them to dashboard
     if (token) {
-      navigate(location?.state?.from ?? '/', { replace: true });
+      navigate(location?.state?.from ?? '/dashboard', { replace: true });
     }
   }, [token]);
 };
