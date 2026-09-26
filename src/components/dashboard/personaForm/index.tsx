@@ -16,10 +16,15 @@ import { CreatePersonaRequest, Persona } from '@/types/persona';
 
 interface PersonaFormProps {
   isEditing?: boolean;
+  isCloning?: boolean;
   initialData?: Persona;
 }
 
-export const PersonaForm = ({ isEditing = false, initialData }: PersonaFormProps) => {
+export const PersonaForm = ({
+  isEditing = false,
+  isCloning = false,
+  initialData,
+}: PersonaFormProps) => {
   const navigate = useNavigate();
   const token = useAppSelector((store) => store.auth.token);
 
@@ -46,8 +51,14 @@ export const PersonaForm = ({ isEditing = false, initialData }: PersonaFormProps
 
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name || '');
-      setTopics(initialData.topics || []);
+      setName(
+        initialData.name
+          ? isCloning
+            ? `${initialData.name} (Copy)`
+            : initialData.name
+          : ''
+      );
+      setTopics(initialData.topics ? [...initialData.topics] : []);
       setCharacterSheetPath(initialData.characterSheetPath || '');
       setHeadPicturePath(initialData.headPicturePath || '');
       setReferenceAudioPath(initialData.referenceAudioPath || '');
@@ -57,7 +68,7 @@ export const PersonaForm = ({ isEditing = false, initialData }: PersonaFormProps
       setVideoPromptPath(initialData.videoPromptPath || '');
       setScriptJudgePath(initialData.scriptJudgePath || '');
     }
-  }, [initialData]);
+  }, [initialData, isCloning]);
 
   const handleAddTopic = () => {
     const trimmed = topicInput.trim();
@@ -142,11 +153,17 @@ export const PersonaForm = ({ isEditing = false, initialData }: PersonaFormProps
       <div className='bg-white border border-gray-200 rounded-xl shadow-sm p-6 sm:p-8'>
         <div className='border-b border-gray-100 pb-5 mb-6'>
           <h1 className='text-2xl font-semibold text-gray-900'>
-            {isEditing ? 'Edit Persona' : 'Create New Persona'}
+            {isEditing
+              ? 'Edit Persona'
+              : isCloning
+              ? 'Clone Persona'
+              : 'Create New Persona'}
           </h1>
           <p className='text-sm text-gray-500 mt-1'>
             {isEditing
               ? 'Update the parameters and DNA paths for this creator persona.'
+              : isCloning
+              ? 'Create a new persona cloned from an existing configuration. Edit any details before saving.'
               : 'Configure a new AI creator persona with topical expertise and voice/visual DNA.'}
           </p>
         </div>

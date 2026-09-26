@@ -70,6 +70,7 @@ AI-vid-frontend/
 | **E2E-04** | Search & Filter | Types query in the search bar, verifies matching personas remain visible while non-matching personas are excluded. Clears search and verifies list restores. |
 | **E2E-05** | Pagination Controls | Creates multiple records (or inspects existing), switches rows per page, toggles next/prev pages, verifies entry counts (`Showing X to Y of Z`). |
 | **E2E-06** | Cleanup / Deletion | Clicks delete icon on created test personas, handles browser confirmation dialog, verifies row is removed from table. |
+| **E2E-07** | Clone Persona Workflow | Clicks clone icon on row, verifies form opens with `?cloneId=...` and pre-filled data without creating in DB yet. Changes name, submits, and verifies new cloned record appears. |
 
 ---
 

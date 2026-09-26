@@ -185,4 +185,72 @@ test.describe('Persona Management E2E', () => {
     // Verify persona is removed
     await expect(page.getByText(personaToDelete)).not.toBeVisible();
   });
+
+  test('E2E-07: Clone action pre-fills form and only creates on submit', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const sourcePersonaName = `Source For Clone ${timestamp}`;
+    const clonedPersonaName = `Cloned Custom ${timestamp}`;
+
+    // 1. Create a source persona
+    await page.getByTestId('add-persona-button').click();
+    await page.locator('input#persona-name').fill(sourcePersonaName);
+    await page.locator('input#persona-topics').fill('Generative AI');
+    await page.getByRole('button', { name: 'Add Topic' }).click();
+    await page.locator('input#characterSheetPath').fill('/assets/personas/source_sheet.png');
+    await page.getByRole('button', { name: 'Create Persona' }).click();
+
+    await expect(page).toHaveURL(/\/dashboard\/?$/);
+    await expect(page.locator('h1')).toHaveText('Personas');
+
+    // 2. Locate source row and click the Clone button
+    const sourceRow = page.locator('tr', { hasText: sourcePersonaName });
+    await expect(sourceRow).toBeVisible();
+
+    const cloneBtn = sourceRow.locator('a[title="Clone Persona"]');
+    await expect(cloneBtn).toBeVisible();
+    await cloneBtn.click();
+
+    // 3. Assert navigation to persona-form with ?cloneId= parameter
+    await expect(page).toHaveURL(/.*persona-form\?cloneId=\d+/);
+    await expect(page.locator('h1')).toHaveText('Clone Persona');
+
+    // 4. Assert form is pre-filled with source persona details
+    const nameInput = page.locator('input#persona-name');
+    await expect(nameInput).toHaveValue(`${sourcePersonaName} (Copy)`);
+    await expect(page.getByText('Generative AI')).toBeVisible();
+    await expect(page.locator('input#characterSheetPath')).toHaveValue(
+      '/assets/personas/source_sheet.png'
+    );
+
+    // 5. Customize the name before creating
+    await nameInput.fill(clonedPersonaName);
+
+    // 6. Submit the form to create the clone
+    await page.getByRole('button', { name: 'Create Persona' }).click();
+
+    // 7. Verify redirect back to dashboard
+    await expect(page).toHaveURL(/\/dashboard\/?$/);
+    await expect(page.locator('h1')).toHaveText('Personas');
+
+    // 8. Verify BOTH original and cloned personas exist in the table
+    const originalRowAfter = page.locator('tr', { hasText: sourcePersonaName });
+    const clonedRowAfter = page.locator('tr', { hasText: clonedPersonaName });
+    await expect(originalRowAfter).toBeVisible();
+    await expect(clonedRowAfter).toBeVisible();
+
+    // 9. Clean up both created personas
+    page.on('dialog', async (dialog) => {
+      await dialog.accept();
+    });
+
+    const originalDeleteBtn = originalRowAfter.locator('button[title="Delete Persona"]');
+    await originalDeleteBtn.click();
+    await expect(page.getByText(sourcePersonaName)).not.toBeVisible();
+
+    const clonedDeleteBtn = clonedRowAfter.locator('button[title="Delete Persona"]');
+    await clonedDeleteBtn.click();
+    await expect(page.getByText(clonedPersonaName)).not.toBeVisible();
+  });
 });

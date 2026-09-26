@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { PenIcon, Trash2Icon } from 'lucide-react';
+import { CopyIcon, PenIcon, Trash2Icon } from 'lucide-react';
 import { Persona } from '@/types/persona';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,21 @@ export const PersonaDataTable = ({
                   data-testid={`edit-persona-${persona.id}`}
                 >
                   <PenIcon className='h-4 w-4' />
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant='tertiary-gray'
+                size='sm'
+                className='h-8 w-8 p-0 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg'
+                title='Clone Persona'
+              >
+                <Link
+                  to={`/dashboard/persona-form?cloneId=${persona.id}`}
+                  data-testid={`clone-persona-${persona.id}`}
+                >
+                  <CopyIcon className='h-4 w-4' />
                 </Link>
               </Button>
 

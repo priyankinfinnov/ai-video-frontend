@@ -53,6 +53,9 @@ The application uses an OpenAPI-aligned **Persona Management** system with gener
   - Form: `PersonaForm` (`src/components/dashboard/personaForm/index.tsx`)
   - Mutation: `useCreatePersonaMutation` (`src/queries/personaActions.ts`) -> `POST /api/personas`
   - Fields: `name` (required), `topics` (required string array), and optional multimodal DNA paths (`characterSheetPath`, `headPicturePath`, `referenceAudioPath`, `writingDnaPath`, `visualDnaPath`, `scriptPromptPath`, `videoPromptPath`, `scriptJudgePath`). Empty strings are omitted so backend validation passes cleanly.
+- **Clone Persona**:
+  - Route: `/dashboard/persona-form?cloneId=<ID>` (`src/pages/PersonaFormPage.tsx`)
+  - Behavior: Clicking the clone copy icon on the row opens the Persona form pre-filled with the source persona's details (name suffixed with `(Copy)`, topics, asset paths) without making any mutations to the database. The persona is only saved when the user clicks "Create Persona" (`POST /api/personas`).
 - **Update / Edit Persona**:
   - Route: `/dashboard/persona-form?personaId=<ID>` (`src/pages/PersonaFormPage.tsx`)
   - Single Item Query: `useGetPersonaQuery` (`src/queries/personaQueries.ts`) -> `GET /api/personas/:id`
