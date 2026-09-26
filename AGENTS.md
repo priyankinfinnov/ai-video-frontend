@@ -89,6 +89,7 @@ All UI development must strictly adhere to the project's design system:
 ## 5. Code Reusability & Minimalist Principles
 
 - **DRY (Don't Repeat Yourself)**:
+  - Check CodeGraph first before writing any new code to verify if existing utilities, hooks, or components already exist.
   - Reuse hooks from `src/hooks/` (`useResponsive`, `useAuthForms`, etc.).
   - Reuse utility functions from `src/utils/utils.ts` (date formatting, cookie helpers, error parsers).
   - Reuse API services from `src/services/` and TanStack Query definitions from `src/queries/`.
@@ -102,27 +103,44 @@ All UI development must strictly adhere to the project's design system:
 
 ---
 
-## 6. Keeping CodeGraph Up to Date
+## 6. CodeGraph Guidelines: Mandatory Usage & Maintenance
 
-This project uses **CodeGraph** (`.codegraph/`) to maintain an indexed knowledge graph of symbols, dependencies, and call hierarchies for AI agents:
+This project uses **CodeGraph** (`.codegraph/`) to maintain an indexed knowledge graph of symbols, dependencies, and call hierarchies. AI agents and contributors must follow a **CodeGraph-First** approach:
 
-1. **Syncing Changes**:
-   - Whenever you create, modify, rename, or delete files, components, functions, or types, **keep CodeGraph in sync**.
-   - Run the sync command:
+1. **Mandatory Planning & Code Discovery (Always Use CodeGraph First)**:
+   - **When Planning Any Task or Feature**: Before creating an implementation plan, formulating changes, or answering architectural questions, use CodeGraph to explore the relevant areas, find established conventions, and trace execution flows.
+   - **When Looking for Functions, Components, or Types**: Do **NOT** perform blind grep or traverse files manually. Use CodeGraph as your primary discovery tool to locate existing functions, hooks, interfaces, queries, and components.
+   - **MCP Tool**: Call `codegraph_explore` with a natural language query or symbol names (e.g. `"useAuthForms"`, `"call template form submission"`, `"protected route redirect"`). It returns verbatim source code and call paths in a single efficient call.
+   - **CLI Commands**:
+     - Explore a symbol or area:
+       ```bash
+       codegraph explore <symbol_or_query>
+       ```
+     - Search indexed symbols:
+       ```bash
+       codegraph search <query>
+       ```
+
+2. **Impact & Dependency Analysis Before Edits**:
+   - Before modifying, renaming, or deleting any function, component, or type, use CodeGraph to inspect all callers and dependent modules to prevent breaking changes or regressions:
+     ```bash
+     codegraph callers <symbol>
+     codegraph callees <symbol>
+     ```
+
+3. **Keeping CodeGraph Up to Date (Syncing Changes)**:
+   - Whenever you create, modify, rename, or delete files, components, functions, or types, **immediately sync CodeGraph**:
      ```bash
      codegraph sync
      ```
-   - If extensive structural changes or branch switching occurs, re-index the project:
+   - For extensive structural changes, dependency updates, or branch changes, re-index:
      ```bash
      codegraph index
      ```
-2. **Checking Status**:
-   - Check index freshness and node statistics with:
+   - Check index freshness and node statistics:
      ```bash
      codegraph status
      ```
-3. **Leveraging CodeGraph for Exploration**:
-   - Before modifying existing functions or refactoring components, use CodeGraph MCP tools (or `codegraph explore <symbol>` / `codegraph callers <symbol>`) to identify dependencies and prevent regressions.
 
 ---
 
