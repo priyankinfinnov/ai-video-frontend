@@ -58,7 +58,7 @@ const CallTemplatePage = () => {
   const { userInfo, token } = useAppSelector((store) => store.auth);
   const { data, isLoading, isError } = useGetAllCallTemplateQuery({
     token,
-    teamId: userInfo?.teamIds[0],
+    teamId: userInfo?.teamIds?.[0],
   });
 
   if (isError) {

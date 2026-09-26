@@ -13,11 +13,11 @@ const CallTemplateFormPage = () => {
 
   const responseCallTemplate = useGetCallTemplateQuery({
     token,
-    teamId: userInfo?.teamIds[0],
+    teamId: userInfo?.teamIds?.[0],
     callTemplateId: isEditingAndCallTemplateId,
   });
 
-  if (userInfo?.teamIds.length < 1) {
+  if (!userInfo?.teamIds || userInfo.teamIds.length < 1) {
     return <p>To Create a Call template you have to join a team!</p>;
   }
 

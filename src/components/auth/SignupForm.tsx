@@ -44,7 +44,7 @@ const SignupForm = () => {
   const handlePhoneNumberChange = (
     value: string,
     { dialCode, format }: countryType,
-    e: ChangeEvent<HTMLInputElement>,
+    _e: ChangeEvent<HTMLInputElement>,
     formattedValue: string
   ) => {
     // console log country and value to understand
@@ -85,18 +85,40 @@ const SignupForm = () => {
       return;
     }
 
+    const fullName = [trimmedFormInputs.firstName, trimmedFormInputs.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
     try {
-      await signupService(trimmedFormInputs);
+      const response = await signupService({
+        name: fullName || 'User',
+        email: trimmedFormInputs.email!,
+        password: trimmedFormInputs.password!,
+        ...(phoneNumber ? { phoneNumber } : {}),
+      });
+
       // setting the protected route into cookies, so user can access the same protected route during verification in '/auth/verifyEmail' and pass it to login page from there.
       setCookie({
         cookieName: COOKIE_NAMES.PROTECTED_ROUTE_TO_VISIT_AFTER_LOGIN,
         cookieValue: signupPageLocation?.state?.from ?? '/',
       });
       updateFormSubmissionBool(true);
-      toast.success('Verification link sent to your email successfully');
-    } catch ({ message }) {
+      toast.success(
+        response?.message || 'Verification link sent to your email successfully'
+      );
+    } catch (err: unknown) {
       updateFormSubmissionBool(false);
-      toast.error(message);
+      const error = err as {
+        response?: { data?: { message?: string; error?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Failed to create account';
+      toast.error(errorMessage);
     } finally {
       setIsSubmissionLoading(false);
     }

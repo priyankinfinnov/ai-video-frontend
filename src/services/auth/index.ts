@@ -1,60 +1,105 @@
 import { InputStateType } from '@/types/auth';
 import { apiFetch } from '..';
-import { DASH_API } from '@/constants/constants';
+import { AUTH_API } from '@/constants/constants';
+import UserType from '@/types/userType';
 
-export const loginService = async (userData: InputStateType) => {
-  const response = await apiFetch.post(`${DASH_API}/users/login`, userData);
-  if (response.status === 200 || response.status === 201) {
-    const { success, message } = response.data;
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
 
-    if (!success) {
-      throw new Error(message);
-    }
+export interface LoginResponse {
+  message: string;
+  token: string;
+  user: UserType;
+  access_token?: string;
+}
 
-    return response.data;
-  }
+export interface SignupPayload {
+  name: string;
+  email: string;
+  password: string;
+  phoneNumber?: string;
+}
+
+export interface SignupResponse {
+  message: string;
+  user: UserType;
+  team: {
+    id: number;
+    name: string;
+    adminUserId: number;
+  };
+  verificationToken?: string;
+  verificationUrl?: string;
+}
+
+export interface VerifyEmailResponse {
+  message: string;
+  user: Partial<UserType>;
+}
+
+export const loginService = async (
+  userData: LoginPayload | InputStateType
+): Promise<LoginResponse> => {
+  const response = await apiFetch.post<LoginResponse>(
+    `${AUTH_API}/login`,
+    userData
+  );
+
+  return response.data;
 };
 
-export const signupService = async (userData: InputStateType) => {
-  const response = await apiFetch.post(`${DASH_API}/users/signup`, userData);
+export const signupService = async (
+  userData: SignupPayload | InputStateType
+): Promise<SignupResponse> => {
+  const response = await apiFetch.post<SignupResponse>(
+    `${AUTH_API}/signup`,
+    userData
+  );
 
-  if (response.status === 200 || response.status === 201) {
-    const { message, success } = response.data;
-
-    if (!success) {
-      throw new Error(message);
-    }
-  }
+  return response.data;
 };
 
-export const verifyEmailService = async (token: string) => {
-  const response = await apiFetch.post(
-    `${DASH_API}/users/verifyEmail`,
-    {},
+export const verifyEmailService = async (
+  token: string
+): Promise<VerifyEmailResponse> => {
+  const response = await apiFetch.post<VerifyEmailResponse>(
+    `${AUTH_API}/verify`,
+    { token }
+  );
+
+  return response.data;
+};
+
+export const getUserData = async (
+  token: string
+): Promise<UserType | undefined> => {
+  const response = await apiFetch.get<{ user?: UserType; data?: UserType }>(
+    `${AUTH_API}/me`,
     {
       headers: {
-        authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     }
   );
 
   if (response.status === 200 || response.status === 201) {
-    const { message, success } = response.data;
+    const rawUser = response.data.user || response.data.data;
+    if (rawUser) {
+      const teamIds = (
+        rawUser.teamIds
+          ? rawUser.teamIds.map(String)
+          : rawUser.teamId
+          ? [String(rawUser.teamId)]
+          : []
+      ) as string[];
 
-    if (!success) {
-      throw new Error(message);
+      return {
+        ...rawUser,
+        teamIds,
+      };
     }
-  }
-};
-
-export const getUserData = async (token: string) => {
-  const response = await apiFetch(`${DASH_API}/users/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (response.status === 200 || response.status === 201) {
-    return response.data.data;
+    return rawUser;
   }
 };

@@ -11,7 +11,7 @@ export const useCreateCallTemplateMutation = (token: string | null) => {
 
   return useMutation({
     mutationKey: ['createCallTemplate'],
-    mutationFn: async (templateData) => {
+    mutationFn: async (templateData: Record<string, unknown>) => {
       await apiFetch.post(`${DASH_API}/callTemplates`, templateData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -33,7 +33,7 @@ export const useCreateCallTemplateMutation = (token: string | null) => {
 };
 
 export const useUpdateCallTemplateMutation = (
-  callTemplateId: string,
+  callTemplateId: string | undefined,
   token: string | null
 ) => {
   const queryClient = useQueryClient();
@@ -41,7 +41,7 @@ export const useUpdateCallTemplateMutation = (
 
   return useMutation({
     mutationKey: ['updateCallTemplate', callTemplateId],
-    mutationFn: async (templateData) => {
+    mutationFn: async (templateData: Record<string, unknown>) => {
       await apiFetch.patch(
         `${DASH_API}/callTemplates/${callTemplateId}`,
         templateData,

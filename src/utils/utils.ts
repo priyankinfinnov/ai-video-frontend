@@ -96,7 +96,7 @@ const camelCaseToSentenceCase = (camelCaseString: string) => {
 };
 
 // compare object properties
-type GenericObject = { [key: string]: any };
+type GenericObject = { [key: string]: unknown };
 
 const isObject = <T>(object: T) =>
   object !== null && typeof object === 'object';
@@ -138,35 +138,34 @@ export const compareObjectProperties = (
   return true;
 };
 
-export const deepCloneTrimmed = (object) => {
-  if (typeof object !== 'object') {
-    let primitive = object;
+export const deepCloneTrimmed = <T>(object: T): T => {
+  if (typeof object !== 'object' || object === null) {
     if (typeof object === 'string') {
-      primitive = primitive.trim();
+      return object.trim() as unknown as T;
     }
-    return primitive;
+    return object;
   }
 
   if (Array.isArray(object)) {
-    return object.map((item) => deepCloneTrimmed(item));
+    return object.map((item) => deepCloneTrimmed(item)) as unknown as T;
   }
 
-  let copy = {};
-  for (const key in object) {
-    copy = {
-      ...copy,
-      [key]: deepCloneTrimmed(object[key]),
-    };
+  const copy = {} as Record<string, unknown>;
+  for (const key of Object.keys(object)) {
+    copy[key] = deepCloneTrimmed((object as Record<string, unknown>)[key]);
   }
 
-  return copy;
+  return copy as T;
 };
 
-type TypeIsAnyNestedPropertyOfObjectEmpty = (object: any) => string | boolean;
+type TypeIsAnyNestedPropertyOfObjectEmpty = (
+  object: unknown
+) => string | boolean;
 export const isAnyNestedPropertyOfObjectEmpty: TypeIsAnyNestedPropertyOfObjectEmpty =
   (object) => {
-    for (const key in object) {
-      const value = object[key];
+    if (typeof object !== 'object' || object === null) return false;
+    for (const key in object as Record<string, unknown>) {
+      const value = (object as Record<string, unknown>)[key];
 
       if (typeof value === 'string' && !value)
         return camelCaseToSentenceCase(key);
@@ -178,7 +177,13 @@ export const isAnyNestedPropertyOfObjectEmpty: TypeIsAnyNestedPropertyOfObjectEm
     return false;
   };
 
-export const removeIdAndGiveRest = ({ _id, ...rest }) => rest;
+export const removeIdAndGiveRest = <T extends Record<string, unknown>>(
+  object: T
+): Omit<T, '_id'> => {
+  const { _id: _unusedId, ...rest } = object as T & { _id?: unknown };
+  void _unusedId;
+  return rest;
+};
 
 export const getCreatedDate = (dateStr: string) => {
   const pastDate = new Date(dateStr);

@@ -1,4 +1,3 @@
-/* eslint-disable no-useless-escape */
 // used in useResponsive hook
 export const MAX_MOBILE_WIDTH = 768;
 export const AUTH_TOKEN_EXPIRY_DURATION_DAYS = 29;
@@ -23,3 +22,5 @@ export const PATTERN_REGEX = {
 };
 
 export const DASH_API = '/dashapi/v1';
+export const API_BASE = '/api';
+export const AUTH_API = '/api/auth';

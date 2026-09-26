@@ -17,7 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import { loginService } from '@/services/auth';
 import { useAppDispatch } from '@/store/store';
-import { addUserCredentials } from '@/store/auth/authSlice';
+import { addUserCredentials, updateUserInfo } from '@/store/auth/authSlice';
 import { COOKIE_NAMES } from '@/constants/constants';
 
 const LoginForm = () => {
@@ -32,6 +32,9 @@ const LoginForm = () => {
     {
       email: '',
       password: '',
+    },
+    {
+      validatePasswordComplexity: false,
     }
   );
   const [isSubmissionLoading, setIsSubmissionLoading] = useState(false);
@@ -61,16 +64,46 @@ const LoginForm = () => {
     }
 
     try {
-      const { message, access_token: token } = await loginService(
-        trimmedFormInputs
-      );
+      const response = await loginService(trimmedFormInputs);
+      const token = response.token || response.access_token;
+
+      if (!token) {
+        throw new Error('Authentication token not received.');
+      }
 
       dispatch(addUserCredentials(token));
+
+      if (response.user) {
+        const teamIds = (
+          response.user.teamIds
+            ? response.user.teamIds.map(String)
+            : response.user.teamId
+            ? [String(response.user.teamId)]
+            : []
+        ) as string[];
+
+        dispatch(
+          updateUserInfo({
+            ...response.user,
+            teamIds,
+          })
+        );
+      }
+
       // if user logged in after verification
       removeCookie(COOKIE_NAMES.PROTECTED_ROUTE_TO_VISIT_AFTER_LOGIN);
-      toast.success(message);
-    } catch ({ message }) {
-      toast.error(message);
+      toast.success(response.message || 'Login successful');
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { message?: string; error?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Login failed';
+      toast.error(errorMessage);
     } finally {
       setIsSubmissionLoading(false);
     }

@@ -17,8 +17,12 @@ const VerifyEmailPage = () => {
     COOKIE_NAMES.PROTECTED_ROUTE_TO_VISIT_AFTER_LOGIN
   );
 
-  const verificationFailed = () => {
-    toast.error('Invalid URL');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  const verificationFailed = (msg?: string) => {
+    const errorText = msg || 'Invalid or expired verification link';
+    toast.error(errorText);
+    setErrorMessage(errorText);
     setIsVerificationFailed(true);
   };
 
@@ -29,13 +33,21 @@ const VerifyEmailPage = () => {
     }
 
     try {
-      await verifyEmailService(token);
-      toast.success('Verification Done');
+      const response = await verifyEmailService(token);
+      toast.success(response?.message || 'Email successfully verified');
       toast.loading('Redirecting to Login Page');
 
       navigate('/login', { state: { from: protectedRouteToVisit ?? '/' } });
-    } catch (error) {
-      verificationFailed();
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { message?: string; error?: string } };
+        message?: string;
+      };
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message;
+      verificationFailed(msg);
     }
   };
 
@@ -48,7 +60,7 @@ const VerifyEmailPage = () => {
       <p className='text-lg md:text-2xl text-center'>
         {isVerificationFailed ? (
           <span className='text-error-500'>
-            Error: Something wrong in the URL 😢
+            {errorMessage || 'Error: Something wrong in the URL 😢'}
           </span>
         ) : (
           'Loading...'

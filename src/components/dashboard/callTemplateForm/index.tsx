@@ -38,7 +38,7 @@ import {
 } from '@/types/callTemplate';
 
 type CallTemplateFormProps = {
-  isEditingTemplateAndData: CallTemplateType;
+  isEditingTemplateAndData?: CallTemplateType;
 };
 
 const CONSTANT_RESULT_TYPES = ['yes / no', 'text'];
@@ -180,9 +180,9 @@ const CallTemplateForm = ({
     }
 
     // if all inputs of prevous prompt Var in list is empty, dont add a new promptVariable.
-    // rest operator used here
-    const { _id, ...lastPromptVariable } =
-      listOfPromptVariables[listOfPromptVariables.length - 1];
+    const lastPromptVariable = removeIdAndGiveRest(
+      listOfPromptVariables[listOfPromptVariables.length - 1]
+    );
     const isLastPromptVariableAllInputEmpty = Object.values(
       lastPromptVariable
     ).every((inputValue) => !inputValue);
@@ -205,9 +205,9 @@ const CallTemplateForm = ({
     }
 
     // if all inputs of prevous question in result Template is empty, dont add a new Question.
-    // rest operator used here
-    const { _id, ...lastQuestion } =
-      resultTemplates[resultTemplates.length - 1];
+    const lastQuestion = removeIdAndGiveRest(
+      resultTemplates[resultTemplates.length - 1]
+    );
     const isLastQuestionAllInputEmpty = Object.values(lastQuestion).every(
       (inputValue) => !inputValue
     );
@@ -257,7 +257,7 @@ const CallTemplateForm = ({
     }
 
     const templateData = {
-      teamId: userInfo?.teamIds[0],
+      teamId: userInfo?.teamIds?.[0] || '',
       ...trimmedInputsClone,
       voiceId: trimmedInputsClone.voice,
       status: 'paused',

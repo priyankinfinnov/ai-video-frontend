@@ -7,7 +7,8 @@ Welcome to the AI Video Frontend codebase. This document outlines the project ar
 ## 1. Project Overview & Architecture
 
 - **Project Type**: Base React front-end application built with Vite, TypeScript, Tailwind CSS, Redux Toolkit, and TanStack React Query.
-- **Backend Service**: Connects to the backend server running locally on **`http://localhost:6001`** with the API base prefix `/dashapi/v1` (configured via `src/services/index.ts` and `src/constants/constants.ts`).
+- **Backend Service**: Connects to the backend server running locally on **`http://localhost:6001`** (configured via `src/services/index.ts` and `src/constants/constants.ts`).
+- **Backend Swagger API Spec**: **`http://localhost:6001/api/docs.json`** (OpenAPI 3.0.3 specification for debugging, payload contracts, and endpoint verification).
 - **Core Purpose**: Provides a clean, modern dashboard interface for video creation workflows, template management, and team-based actions.
 
 ---
@@ -17,10 +18,11 @@ Welcome to the AI Video Frontend codebase. This document outlines the project ar
 Always enforce and follow the authentication flow across all routes and API requests:
 
 1. **Auth Flows**:
-   - **Sign Up**: `src/pages/Signup.tsx` & `src/components/auth/SignupForm.tsx` (`/signup`)
-   - **Login**: `src/pages/Login.tsx` & `src/components/auth/LoginForm.tsx` (`/login`)
-   - **Email Verification**: `src/pages/VerifyEmailPage.tsx` (`/auth/verifyEmail`)
-   - **Current User Profile**: Fetched on app mount via `getUserData(token)` in `src/App.tsx` (`/dashapi/v1/users/me`)
+   - **Sign Up**: `src/pages/Signup.tsx` & `src/components/auth/SignupForm.tsx` (`/signup`) -> `POST /api/auth/signup` (`{ name, email, password, phoneNumber? }`)
+   - **Login**: `src/pages/Login.tsx` & `src/components/auth/LoginForm.tsx` (`/login`) -> `POST /api/auth/login` (`{ email, password }` -> returns `{ message, token, user }`)
+   - **Email Verification**: `src/pages/VerifyEmailPage.tsx` (`/auth/verifyEmail`) -> `POST /api/auth/verify` (`{ token }`) or `GET /api/auth/verify?token=...`
+   - **Current User Profile**: Fetched on app mount via `getUserData(token)` in `src/App.tsx` -> `GET /api/auth/me` with `Authorization: Bearer <token>`
+   - **Swagger JSON API Schema**: Keep `http://localhost:6001/api/docs.json` as the ground truth reference for all endpoint contracts.
 
 2. **State & Cookies**:
    - Auth token and user profile are managed in Redux (`authSlice` in `src/store/auth/authSlice.ts`).

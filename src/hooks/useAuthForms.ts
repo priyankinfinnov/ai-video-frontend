@@ -14,12 +14,21 @@ type useAuthFormReturnValueType = {
   handleInputChange: handleInputChangeType;
 };
 
+type AuthFormOptions = {
+  validatePasswordComplexity?: boolean;
+};
+
 type useAuthFormsType = (
   initialState: InputStateType,
-  errorMsgInitialState: ErrorMsgType
+  errorMsgInitialState: ErrorMsgType,
+  options?: AuthFormOptions
 ) => useAuthFormReturnValueType;
 
-const useAuthForms: useAuthFormsType = (initialState, errorMsgInitialState) => {
+const useAuthForms: useAuthFormsType = (
+  initialState,
+  errorMsgInitialState,
+  options = { validatePasswordComplexity: true }
+) => {
   const [formInputs, setFormInputs] = useState<InputStateType>(initialState);
 
   const [errorMsg, setErrorMsg] = useState<ErrorMsgType>(errorMsgInitialState);
@@ -29,9 +38,14 @@ const useAuthForms: useAuthFormsType = (initialState, errorMsgInitialState) => {
   }) => {
     setFormInputs((prev) => ({ ...prev, [name]: value }));
 
+    const shouldValidatePattern =
+      name !== 'password' || options.validatePasswordComplexity !== false;
+
     // handles both email and password validation
     const isValid =
-      PATTERN_REGEX[name as keyof typeof PATTERN_REGEX].test(value);
+      shouldValidatePattern && PATTERN_REGEX[name as keyof typeof PATTERN_REGEX]
+        ? PATTERN_REGEX[name as keyof typeof PATTERN_REGEX].test(value)
+        : true;
 
     // is value empty or valid, dont show errorMsg
     setErrorMsg({

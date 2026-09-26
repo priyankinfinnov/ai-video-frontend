@@ -3,8 +3,10 @@ import { ChangeEvent } from 'react';
 type InputStateType = {
   firstName?: string;
   lastName?: string;
+  name?: string;
   email?: string;
   password?: string;
+  phoneNumber?: string;
 };
 
 export enum ErrorMsgEnum {

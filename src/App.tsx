@@ -18,7 +18,7 @@ import { ProtectedRoutes } from './components';
 import { useAppDispatch, useAppSelector } from './store/store';
 import { useEffect, useState } from 'react';
 import { getUserData } from './services/auth';
-import { updateUserInfo } from './store/auth/authSlice';
+import { removeUserCredentials, updateUserInfo } from './store/auth/authSlice';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
@@ -48,10 +48,20 @@ const App = () => {
 
     try {
       const userInfo = await getUserData(token);
-      dispatch(updateUserInfo(userInfo));
-    } catch (error) {
-      console.error(error);
-      toast.error('Something Went Wrong...');
+      if (userInfo) {
+        dispatch(updateUserInfo(userInfo));
+      }
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { status?: number };
+      };
+      console.error('Failed to fetch user data:', err);
+      if (error?.response?.status === 401) {
+        dispatch(removeUserCredentials());
+        toast.error('Session expired. Please log in again.');
+      } else {
+        toast.error('Unable to fetch user profile.');
+      }
     }
   };
 
