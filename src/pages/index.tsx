@@ -8,6 +8,7 @@ import PersonaPage from './PersonaPage';
 import PersonaFormPage from './PersonaFormPage';
 import ProjectsPage from './ProjectsPage';
 import ProjectFormPage from './ProjectFormPage';
+import ProjectDetailsPage from './ProjectDetailsPage';
 import ShortsFormPage from './ShortsFormPage';
 import Signup from './Signup';
 import VerifyEmailPage from './VerifyEmailPage';
@@ -23,6 +24,7 @@ export {
   PersonaFormPage,
   ProjectsPage,
   ProjectFormPage,
+  ProjectDetailsPage,
   ShortsFormPage,
   PricingPage,
   VerifyEmailPage,

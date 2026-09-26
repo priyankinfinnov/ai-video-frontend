@@ -12,12 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 interface DataTableProps<TData, TValue = unknown> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   isLoading?: boolean;
   emptyMessage?: string;
+  onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue = unknown>({
@@ -25,6 +27,7 @@ export function DataTable<TData, TValue = unknown>({
   data,
   isLoading = false,
   emptyMessage = 'No results found.',
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -71,7 +74,13 @@ export function DataTable<TData, TValue = unknown>({
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
-                className='border-b border-gray-100 hover:bg-gray-50/80 transition-colors'
+                className={cn(
+                  'border-b border-gray-100 transition-colors',
+                  onRowClick
+                    ? 'cursor-pointer hover:bg-primary-50/50'
+                    : 'hover:bg-gray-50/80'
+                )}
+                onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className='py-3.5 px-4 text-sm'>

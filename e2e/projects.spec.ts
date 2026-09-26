@@ -277,4 +277,83 @@ test.describe('Projects & Shorts Management E2E', () => {
     // Assert row removed
     await expect(page.locator('tr', { hasText: promptToDelete })).not.toBeVisible();
   });
+
+  test('E2E-PROJ-08: Click project row to open Video Project Details page and verify all tabs & 480p video', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const promptDetails = `Deep Dive Quantum Computing ${timestamp}`;
+
+    // 1. Create project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(promptDetails);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // 2. Locate project row and click on the prompt cell
+    const row = page.locator('tr', { hasText: promptDetails });
+    await expect(row).toBeVisible();
+    await row.getByText(promptDetails).click();
+
+    // 3. Verify URL navigates to /dashboard/projects/:id
+    await expect(page).toHaveURL(/.*\/dashboard\/projects\/\d+/);
+
+    // 4. Verify Project Details page header
+    await expect(page.locator('h1').getByText(promptDetails)).toBeVisible();
+    await expect(page.getByText(/Project #\d+/).first()).toBeVisible();
+
+    // 5. Verify all 7 tabs are present
+    const tabDetails = page.getByTestId('tab-details');
+    const tabParts = page.getByTestId('tab-parts');
+    const tabAssets = page.getByTestId('tab-assets');
+    const tabScriptLogs = page.getByTestId('tab-script-logs');
+    const tabShortsProjects = page.getByTestId('tab-shorts-projects');
+    const tabShortsClips = page.getByTestId('tab-shorts-clips');
+    const tabVideo480p = page.getByTestId('tab-video-480p');
+
+    await expect(tabDetails).toBeVisible();
+    await expect(tabParts).toBeVisible();
+    await expect(tabAssets).toBeVisible();
+    await expect(tabScriptLogs).toBeVisible();
+    await expect(tabShortsProjects).toBeVisible();
+    await expect(tabShortsClips).toBeVisible();
+    await expect(tabVideo480p).toBeVisible();
+
+    // 6. Test Overview Tab content
+    await expect(page.getByText('Pipeline Generation Timings')).toBeVisible();
+    await expect(page.getByText('Concept & Raw Input Prompt')).toBeVisible();
+
+    // 7. Click Video Parts tab
+    await tabParts.click();
+    await expect(page).toHaveURL(/.*tab=parts/);
+    await expect(page.getByText('Video Parts Pipeline')).toBeVisible();
+
+    // 8. Click Part Assets tab
+    await tabAssets.click();
+    await expect(page).toHaveURL(/.*tab=assets/);
+    await expect(page.getByText('Visual & Multimodal Assets')).toBeVisible();
+
+    // 9. Click Script Iterations tab
+    await tabScriptLogs.click();
+    await expect(page).toHaveURL(/.*tab=script-logs/);
+    await expect(page.getByText('Script Judge & Iteration Logs')).toBeVisible();
+
+    // 10. Click Shorts Projects tab
+    await tabShortsProjects.click();
+    await expect(page).toHaveURL(/.*tab=shorts-projects/);
+    await expect(page.getByText('Shorts Pipelines for Project')).toBeVisible();
+
+    // 11. Click Short Clips tab
+    await tabShortsClips.click();
+    await expect(page).toHaveURL(/.*tab=shorts-clips/);
+    await expect(page.getByText('Shorts Viral Clips')).toBeVisible();
+
+    // 12. Click 480p Video Player tab
+    await tabVideo480p.click();
+    await expect(page).toHaveURL(/.*tab=video-480p/);
+    await expect(page.getByText('Generated 480p Video Player')).toBeVisible();
+    await expect(page.getByText('480p SD Base')).toBeVisible();
+    await expect(page.getByText('480p Stitched Video Technical Information')).toBeVisible();
+  });
 });

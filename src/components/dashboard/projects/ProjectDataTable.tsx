@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { CopyIcon, PenIcon, ScissorsIcon, Trash2Icon, ExternalLinkIcon } from 'lucide-react';
+import { CopyIcon, PenIcon, ScissorsIcon, Trash2Icon, ExternalLinkIcon, EyeIcon } from 'lucide-react';
 import { VideoProject, ProjectType } from '@/types/project';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/common/DataTable';
@@ -85,7 +85,22 @@ export const ProjectDataTable = ({
         cell: ({ row }) => {
           const project = row.original;
           return (
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-1' onClick={(e) => e.stopPropagation()}>
+              <Button
+                asChild
+                variant='tertiary-gray'
+                size='sm'
+                className='h-8 w-8 p-0 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg'
+                title='View Project Details'
+              >
+                <Link
+                  to={`/dashboard/projects/${project.id}`}
+                  data-testid={`view-project-${project.id}`}
+                >
+                  <EyeIcon className='h-4 w-4' />
+                </Link>
+              </Button>
+
               <Button
                 asChild
                 variant='tertiary-gray'
@@ -265,11 +280,14 @@ export const ProjectDataTable = ({
     [onDelete]
   );
 
+  const navigate = useNavigate();
+
   return (
     <DataTable
       columns={columns}
       data={data}
       isLoading={isLoading}
+      onRowClick={(project) => navigate(`/dashboard/projects/${project.id}`)}
       emptyMessage='No video projects found. Click "Add Project" to create your first pipeline.'
     />
   );

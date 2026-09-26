@@ -17,6 +17,111 @@ export type ProjectStatus =
   | 'COMPLETED'
   | 'FAILED';
 
+export type PartAssetStatus =
+  | 'PENDING'
+  | 'GENERATING'
+  | 'COMPLETED'
+  | 'FAILED';
+
+export type AssetType =
+  | 'IMAGE'
+  | 'VIDEO'
+  | 'TALKING_HEAD'
+  | 'REMOTION';
+
+export type ShortsProjectStatus =
+  | 'PENDING'
+  | 'TRANSCRIBING'
+  | 'SEGMENT_SEARCH_IN_PROGRESS'
+  | 'VERIFYING'
+  | 'CLIPS_IN_PROGRESS'
+  | 'COMPLETED'
+  | 'FAILED';
+
+export type ShortsClipStatus =
+  | 'PENDING'
+  | 'CARVING_IN_PROGRESS'
+  | 'BURNING_SUBTITLES_IN_PROGRESS'
+  | 'COMPLETED'
+  | 'FAILED';
+
+export interface VideoPartAsset {
+  id: number;
+  teamId: number;
+  projectId: number;
+  videoPartId: number;
+  assetType: AssetType;
+  prompt?: string | null;
+  generationPromptText?: string | null;
+  path?: string | null;
+  status: PartAssetStatus;
+  desiredDuration?: number | null;
+  promptGenSec?: number | null;
+  genSec?: number | null;
+  retryCount: number;
+  createdAt: string;
+  updatedAt: string;
+  videoPart?: VideoPart;
+}
+
+export interface VideoPart {
+  id: number;
+  teamId: number;
+  projectId: number;
+  personaId: number;
+  sequenceNumber: number;
+  partText: string;
+  ttsText?: string | null;
+  audioPath?: string | null;
+  audioStatus: PartAssetStatus;
+  audioGenSec?: number | null;
+  audioDuration?: number | null;
+  wordTimestamps?: string | null;
+  retryCount: number;
+  createdAt: string;
+  updatedAt: string;
+  assets?: VideoPartAsset[];
+  persona?: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface ScriptIterationLog {
+  id: number;
+  teamId: number;
+  projectId: number;
+  attemptNumber: number;
+  scriptText: string;
+  verdict?: string | null;
+  score?: number | null;
+  judgeFeedback?: string | null;
+  judgeGenSec?: number | null;
+  createdAt: string;
+}
+
+export interface ShortsClip {
+  id: number;
+  teamId: number;
+  shortsProjectId: number;
+  title: string;
+  shortsTranscript: string;
+  viralityReason?: string | null;
+  segments?: unknown;
+  status: ShortsClipStatus;
+  videoPath?: string | null;
+  rawVideoPath?: string | null;
+  subtitlesPath?: string | null;
+  duration?: number | null;
+  renderSec?: number | null;
+  subtitlesSec?: number | null;
+  retryCount: number;
+  errorMessage?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  shortsProject?: ShortsProject;
+}
+
 export interface VideoProject {
   id: number;
   teamId: number;
@@ -45,9 +150,8 @@ export interface VideoProject {
     id: number;
     name: string;
   };
-  parts?: unknown[];
+  parts?: VideoPart[];
 }
-
 
 export interface CreateProjectRequest {
   personaId: number;
@@ -86,9 +190,8 @@ export interface ShortsProject {
   createdAt: string;
   updatedAt: string;
   videoProject?: VideoProject;
-  clips?: unknown[];
+  clips?: ShortsClip[];
 }
-
 
 export interface CreateShortsProjectRequest {
   videoProjectId: number;

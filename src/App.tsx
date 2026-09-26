@@ -13,6 +13,7 @@ import {
   PersonaFormPage,
   ProjectsPage,
   ProjectFormPage,
+  ProjectDetailsPage,
   ShortsFormPage,
 } from './pages';
 
@@ -96,6 +97,8 @@ const App = () => {
           <Route path='personas' element={<PersonaPage />} />
           <Route path='persona-form' element={<PersonaFormPage />} />
           <Route path='projects' element={<ProjectsPage />} />
+          <Route path='projects/:id' element={<ProjectDetailsPage />} />
+          <Route path='project-details' element={<ProjectDetailsPage />} />
           <Route path='shorts' element={<ProjectsPage defaultTab='shorts' />} />
           <Route path='project-form' element={<ProjectFormPage />} />
           <Route path='shorts-form' element={<ShortsFormPage />} />
