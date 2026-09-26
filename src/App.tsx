@@ -9,9 +9,8 @@ import {
   LandingPage,
   PricingPage,
   VerifyEmailPage,
-  CallTemplateFormPage,
-  DashboardHome,
-  CallTemplatePage,
+  PersonaPage,
+  PersonaFormPage,
 } from './pages';
 
 import { ProtectedRoutes } from './components';
@@ -35,7 +34,7 @@ const App = () => {
             refetchOnMount: false,
             refetchOnReconnect: true,
             retry: 3,
-            refetchInterval: 5 * 60 * 1000, //5 minutes
+            refetchInterval: 5 * 60 * 1000, // 5 minutes
           },
         },
       })
@@ -88,11 +87,10 @@ const App = () => {
             </ProtectedRoutes>
           }
         >
-          {/* all the routes mentioned here are protected */}
-
-          <Route index element={<DashboardHome />} />
-          <Route path='call-template' element={<CallTemplatePage />} />
-          <Route path='call-template-form' element={<CallTemplateFormPage />} />
+          {/* Landing on /dashboard directly opens Persona table */}
+          <Route index element={<PersonaPage />} />
+          <Route path='personas' element={<PersonaPage />} />
+          <Route path='persona-form' element={<PersonaFormPage />} />
           <Route path='*' element={<ErrorPage />} />
         </Route>
 
@@ -101,7 +99,6 @@ const App = () => {
         <Route path='/auth/verifyEmail' element={<VerifyEmailPage />} />
         <Route path='/pricing' element={<PricingPage />} />
         <Route path='/login' element={<Login />} />
-        <Route path='/signup' element={<Signup />} />
         <Route path='/signup' element={<Signup />} />
         <Route path='*' element={<ErrorPage />} />
       </Routes>

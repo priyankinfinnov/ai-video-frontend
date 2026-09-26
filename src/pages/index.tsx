@@ -4,10 +4,10 @@ import LandingPage from './LandingPage';
 import Login from './Login';
 import PricingPage from './PricingPage';
 import DashboardLayout from './DashboardLayout';
-import CallTemplateFormPage from './CallTemplateFormPage';
+import PersonaPage from './PersonaPage';
+import PersonaFormPage from './PersonaFormPage';
 import Signup from './Signup';
 import VerifyEmailPage from './VerifyEmailPage';
-import CallTemplatePage from './CallTemplatePage';
 
 export {
   DashboardHome,
@@ -16,8 +16,8 @@ export {
   Signup,
   Login,
   ErrorPage,
-  CallTemplateFormPage,
+  PersonaPage,
+  PersonaFormPage,
   PricingPage,
   VerifyEmailPage,
-  CallTemplatePage,
 };

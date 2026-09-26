@@ -132,7 +132,14 @@ export const compareObjectProperties = (
     if (!isBothObject && value1 !== value2) return false;
 
     // if they are objects, and compare their values
-    if (isBothObject && !compareObjectProperties(value1, value2)) return false;
+    if (
+      isBothObject &&
+      !compareObjectProperties(
+        value1 as GenericObject,
+        value2 as GenericObject
+      )
+    )
+      return false;
   }
 
   return true;
