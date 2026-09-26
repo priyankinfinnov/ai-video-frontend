@@ -7,7 +7,7 @@ Welcome to the AI Video Frontend codebase. This document outlines the project ar
 ## 1. Project Overview & Architecture
 
 - **Project Type**: Base React front-end application built with Vite, TypeScript, Tailwind CSS, Redux Toolkit, and TanStack React Query.
-- **Backend Service**: Connects to the backend server running locally on **`http://localhost:3000`** with the API base prefix `/dashapi/v1` (configured via `src/services/index.ts` and `src/constants/constants.ts`).
+- **Backend Service**: Connects to the backend server running locally on **`http://localhost:6001`** with the API base prefix `/dashapi/v1` (configured via `src/services/index.ts` and `src/constants/constants.ts`).
 - **Core Purpose**: Provides a clean, modern dashboard interface for video creation workflows, template management, and team-based actions.
 
 ---

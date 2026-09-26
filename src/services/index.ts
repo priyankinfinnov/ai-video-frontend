@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const apiFetch = axios.create({
-  baseURL: 'http://localhost:3001',
+  baseURL: 'http://localhost:6001',
   headers: {
     Accept: 'application/json',
   },
