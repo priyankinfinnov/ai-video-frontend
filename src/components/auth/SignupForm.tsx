@@ -245,7 +245,12 @@ const SignupForm = () => {
 
       {/* now for button its mb-8, if there are other signup options like google, fb, or github, then only remove mb-8*/}
 
-      <Button size='lg' className='w-full mb-8' disabled={isSubmissionLoading}>
+      <Button
+        type='submit'
+        size='lg'
+        className='w-full mb-8'
+        disabled={isSubmissionLoading}
+      >
         Create an account
       </Button>
 
