@@ -175,9 +175,15 @@ export const ProjectDataTable = ({
         accessorKey: 'rawInputText',
         header: 'Prompt / Concept',
         cell: ({ row }) => {
-          const text = (row.getValue('rawInputText') as string) || '';
+          const text =
+            (row.getValue('rawInputText') as string) ||
+            row.original.generatedScript ||
+            '';
           return (
-            <div className='max-w-xs md:max-w-sm truncate font-medium text-gray-900' title={text}>
+            <div
+              className='max-w-xs md:max-w-sm truncate font-medium text-gray-900'
+              title={text}
+            >
               {text || 'Untitled Project'}
             </div>
           );
@@ -240,19 +246,25 @@ export const ProjectDataTable = ({
         cell: ({ row }) => {
           const isPublished = row.getValue('isPublished') as boolean;
           const link = row.original.publishedLink;
+          const formattedLink = link
+            ? link.startsWith('http://') || link.startsWith('https://')
+              ? link
+              : `https://${link}`
+            : null;
+
           if (isPublished) {
             return (
               <div className='flex items-center gap-1.5'>
                 <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-50 text-success-700 border border-success-200'>
                   Published
                 </span>
-                {link && (
+                {formattedLink && (
                   <a
-                    href={link}
+                    href={formattedLink}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='text-primary-600 hover:text-primary-800'
-                    title='Open link'
+                    title='Open published link'
                   >
                     <ExternalLinkIcon className='w-3.5 h-3.5' />
                   </a>
@@ -261,9 +273,22 @@ export const ProjectDataTable = ({
             );
           }
           return (
-            <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600'>
-              Draft
-            </span>
+            <div className='flex items-center gap-1.5'>
+              <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600'>
+                Draft
+              </span>
+              {formattedLink && (
+                <a
+                  href={formattedLink}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-primary-600 hover:text-primary-800'
+                  title='Open saved link'
+                >
+                  <ExternalLinkIcon className='w-3.5 h-3.5' />
+                </a>
+              )}
+            </div>
           );
         },
       },

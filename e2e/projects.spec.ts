@@ -356,4 +356,46 @@ test.describe('Projects & Shorts Management E2E', () => {
     await expect(page.getByText('480p SD Base')).toBeVisible();
     await expect(page.getByText('480p Stitched Video Technical Information')).toBeVisible();
   });
+
+  test('E2E-PROJ-08: Create video project with pre-written generatedScript and save publishedLink', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const scriptHeader = `Custom Script Mariana Trench ${timestamp}`;
+    const fullScript = `${scriptHeader}\nIn the darkest depths of the ocean, biological bioluminescence lights up the abyss.`;
+    const targetLink = `https://youtube.com/watch?v=ocean-${timestamp}`;
+
+    // 1. Navigate to Projects and click Add Project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await expect(page).toHaveURL(/.*project-form/);
+
+    // 2. Select 'Provide Custom Script' mode
+    const scriptModeBtn = page.getByTestId('input-mode-script-btn');
+    await expect(scriptModeBtn).toBeVisible();
+    await scriptModeBtn.click();
+
+    // 3. Fill in the generatedScript textarea
+    const scriptInput = page.getByTestId('project-script-input');
+    await expect(scriptInput).toBeVisible();
+    await scriptInput.fill(fullScript);
+
+    // 4. Fill in Published Link
+    const linkInput = page.getByTestId('project-published-link-input');
+    await expect(linkInput).toBeVisible();
+    await linkInput.fill(targetLink);
+
+    // Verify checkbox auto-checks or is checked
+    const publishedCheckbox = page.locator('button#project-is-published');
+    await expect(publishedCheckbox).toHaveAttribute('data-state', 'checked');
+
+    // 5. Submit form
+    await page.getByTestId('submit-project-button').click();
+
+    // 6. Assert redirection and row in table
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+    const row = page.locator('tr', { hasText: scriptHeader });
+    await expect(row).toBeVisible();
+    await expect(row.getByText('Published')).toBeVisible();
+  });
 });

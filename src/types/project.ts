@@ -169,8 +169,11 @@ export interface UpdateProjectRequest {
   isPublished?: boolean;
   publishedLink?: string | null;
   rawInputText?: string;
+  generatedScript?: string | null;
   roughLengthInMins?: number;
   teamId?: number;
+  type?: ProjectType;
+  language?: ProjectLanguage;
 }
 
 export interface ShortsProject {

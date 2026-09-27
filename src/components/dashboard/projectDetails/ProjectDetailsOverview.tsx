@@ -181,7 +181,11 @@ export const ProjectDetailsOverview = ({
                 </span>
                 {project.publishedLink && (
                   <a
-                    href={project.publishedLink}
+                    href={
+                      project.publishedLink.startsWith('http')
+                        ? project.publishedLink
+                        : `https://${project.publishedLink}`
+                    }
                     target='_blank'
                     rel='noopener noreferrer'
                     className='text-primary-600 hover:text-primary-800'
@@ -192,9 +196,26 @@ export const ProjectDetailsOverview = ({
                 )}
               </div>
             ) : (
-              <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600'>
-                Unpublished (Draft)
-              </span>
+              <div className='flex items-center gap-1.5'>
+                <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600'>
+                  Unpublished (Draft)
+                </span>
+                {project.publishedLink && (
+                  <a
+                    href={
+                      project.publishedLink.startsWith('http')
+                        ? project.publishedLink
+                        : `https://${project.publishedLink}`
+                    }
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-primary-600 hover:text-primary-800'
+                    title='Visit saved link'
+                  >
+                    <ExternalLinkIcon className='w-4 h-4' />
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </div>
