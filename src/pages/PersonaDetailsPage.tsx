@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -10,6 +11,8 @@ import {
   PenIcon,
   CopyIcon,
   FilmIcon,
+  Link2Icon,
+  ZapIcon,
 } from 'lucide-react';
 import { useGetPersonaQuery } from '@/queries/personaQueries';
 import { useAppSelector } from '@/store/store';
@@ -20,19 +23,26 @@ import {
   PersonaVisualFilesTab,
   PersonaCharacterSheetTab,
   PersonaScriptJudgeTab,
+  PersonaIntegrationsTab,
+  PersonaAutomationsTab,
   PersonaTabKey,
 } from '@/components/dashboard/personaDetails';
 
-export const PersonaDetailsPage = () => {
+interface PersonaDetailsPageProps {
+  defaultTab?: PersonaTabKey;
+}
+
+export const PersonaDetailsPage = ({ defaultTab }: PersonaDetailsPageProps = {}) => {
   const params = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const token = useAppSelector((store) => store.auth.token);
 
-  // Extract ID from route path (/dashboard/personas/:id) or query param (?personaId=...)
+  // Extract ID from route path (/dashboard/personas/:id or /personas/:id/integrations) or query param (?personaId=...)
   const personaId = params.id || searchParams.get('personaId') || '';
 
-  // Tab state derived from URL
-  const initialTab = (searchParams.get('tab') as PersonaTabKey) || 'details';
+  // Tab state derived from URL or defaultTab prop
+  const initialTab =
+    (searchParams.get('tab') as PersonaTabKey) || defaultTab || 'details';
   const [activeTab, setActiveTab] = useState<PersonaTabKey>(initialTab);
 
   useEffect(() => {
@@ -41,6 +51,92 @@ export const PersonaDetailsPage = () => {
       setActiveTab(tabFromUrl);
     }
   }, [searchParams, activeTab]);
+
+  // Handle OAuth Redirect Callback query parameters
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const platform = searchParams.get('platform');
+    const message = searchParams.get('message');
+    const connected = searchParams.get('connected');
+    const channel = searchParams.get('channel');
+    const username = searchParams.get('username');
+    const error = searchParams.get('error');
+
+    if (connected === 'youtube') {
+      const channelName = channel ? decodeURIComponent(channel) : 'Channel';
+      toast.success(`Successfully connected YouTube channel "${channelName}"!`);
+      const targetTab = (searchParams.get('tab') as PersonaTabKey) || 'integrations';
+      setActiveTab(targetTab);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('connected');
+          next.delete('channel');
+          next.set('tab', targetTab);
+          return next;
+        },
+        { replace: true }
+      );
+    } else if (connected === 'instagram') {
+      const handle = username ? decodeURIComponent(username) : 'Account';
+      toast.success(`Successfully connected Instagram account @${handle}!`);
+      const targetTab = (searchParams.get('tab') as PersonaTabKey) || 'integrations';
+      setActiveTab(targetTab);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('connected');
+          next.delete('username');
+          next.set('tab', targetTab);
+          return next;
+        },
+        { replace: true }
+      );
+    } else if (error) {
+      toast.error(decodeURIComponent(error));
+      setActiveTab('integrations');
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('error');
+          next.set('tab', 'integrations');
+          return next;
+        },
+        { replace: true }
+      );
+    } else if (status === 'success') {
+      const platformName = platform === 'INSTAGRAM' ? 'Instagram' : 'YouTube';
+      toast.success(`Successfully connected ${platformName} account!`);
+      setActiveTab('integrations');
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('status');
+          next.delete('platform');
+          next.set('tab', 'integrations');
+          return next;
+        },
+        { replace: true }
+      );
+    } else if (status === 'error') {
+      toast.error(
+        message
+          ? decodeURIComponent(message)
+          : 'Failed to connect social account'
+      );
+      setActiveTab('integrations');
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('status');
+          next.delete('message');
+          next.set('tab', 'integrations');
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleTabChange = (tab: PersonaTabKey) => {
     setActiveTab(tab);
@@ -66,6 +162,8 @@ export const PersonaDetailsPage = () => {
     icon: React.ComponentType<{ className?: string }>;
   }[] = [
     { key: 'details', label: 'Persona Details', icon: UserIcon },
+    { key: 'integrations', label: 'Integrations & Socials', icon: Link2Icon },
+    { key: 'automations', label: 'Automations', icon: ZapIcon },
     { key: 'script-files', label: 'Script Files', icon: FileTextIcon },
     { key: 'visual-files', label: 'Visual Files', icon: SparklesIcon },
     { key: 'character-sheet', label: 'Character Sheet', icon: ImageIcon },
@@ -219,6 +317,14 @@ export const PersonaDetailsPage = () => {
             persona={persona}
             onSwitchTab={handleTabChange}
           />
+        )}
+
+        {activeTab === 'integrations' && (
+          <PersonaIntegrationsTab persona={persona} />
+        )}
+
+        {activeTab === 'automations' && (
+          <PersonaAutomationsTab persona={persona} />
         )}
 
         {activeTab === 'script-files' && (

@@ -3,4 +3,6 @@ export * from './PersonaScriptFilesTab';
 export * from './PersonaVisualFilesTab';
 export * from './PersonaCharacterSheetTab';
 export * from './PersonaScriptJudgeTab';
+export * from './PersonaIntegrationsTab';
+export * from './PersonaAutomationsTab';
 export * from './assetHelper';

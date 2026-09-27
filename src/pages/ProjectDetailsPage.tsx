@@ -10,6 +10,8 @@ import {
   FilmIcon,
   PlayIcon,
   PenIcon,
+  ExternalLinkIcon,
+  YoutubeIcon,
 } from 'lucide-react';
 import { useGetProjectQuery } from '@/queries/projectQueries';
 import { useAppSelector } from '@/store/store';
@@ -256,6 +258,57 @@ export const ProjectDetailsPage = () => {
             {project.roughLengthInMins ? ` • Target: ${project.roughLengthInMins}m` : ''}
             {project.wordCount ? ` • ${project.wordCount} words` : ''}
           </p>
+
+          {project.youtubeStatus && (
+            <div className='flex items-center gap-2 pt-1 flex-wrap'>
+              <span className='text-xs font-semibold text-gray-600 flex items-center gap-1'>
+                <YoutubeIcon className='w-3.5 h-3.5 text-red-600' />
+                YouTube Publishing:
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  project.youtubeStatus === 'PUBLISHED'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : project.youtubeStatus === 'DRAFT'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : project.youtubeStatus === 'FAILED'
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {project.youtubeStatus}
+              </span>
+              {project.youtubeStudioUrl && (
+                <a
+                  href={project.youtubeStudioUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200'
+                  title='Open YouTube Studio Draft'
+                >
+                  <span>Open Studio Draft</span>
+                  <ExternalLinkIcon className='w-3 h-3' />
+                </a>
+              )}
+              {project.youtubeUrl && (
+                <a
+                  href={project.youtubeUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200'
+                  title='Watch on YouTube'
+                >
+                  <span>Watch Video</span>
+                  <ExternalLinkIcon className='w-3 h-3' />
+                </a>
+              )}
+              {project.youtubeErrorMessage && (
+                <span className='text-xs text-red-600 italic'>
+                  ({project.youtubeErrorMessage})
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

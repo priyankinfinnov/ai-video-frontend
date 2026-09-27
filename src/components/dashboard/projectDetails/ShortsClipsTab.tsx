@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { FilmIcon, SparklesIcon, AlertCircleIcon } from 'lucide-react';
+import {
+  FilmIcon,
+  SparklesIcon,
+  AlertCircleIcon,
+  ExternalLinkIcon,
+  Youtube,
+  Instagram,
+} from 'lucide-react';
 import { ShortsClip, ShortsClipStatus } from '@/types/project';
 import { DataTable, DataTableFilterBar, DataTablePagination } from '@/components/common';
 import { useGetShortsClipsQuery } from '@/queries/projectQueries';
@@ -44,9 +51,89 @@ const getClipStatusBadge = (status: ShortsClipStatus | string) => {
       </span>
     );
   }
+  if (upper === 'PENDING') {
+    return (
+      <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-50 text-warning-700 border border-warning-200'>
+        Pending
+      </span>
+    );
+  }
   return (
-    <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-50 text-warning-700 border border-warning-200'>
-      Pending
+    <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200'>
+      <span className='w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse' />
+      {status.replace(/_/g, ' ').toLowerCase()}
+    </span>
+  );
+};
+
+const getSocialStatusBadge = (
+  status?: string | null,
+  url?: string | null,
+  platform: 'YOUTUBE' | 'INSTAGRAM' = 'YOUTUBE'
+) => {
+  const upper = (status || 'NOT_UPLOADED').toUpperCase();
+
+  if (upper === 'PUBLISHED') {
+    return (
+      <div className='flex items-center gap-1.5'>
+        <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200'>
+          {platform === 'YOUTUBE' ? (
+            <Youtube className='w-3 h-3 text-red-600' />
+          ) : (
+            <Instagram className='w-3 h-3 text-pink-600' />
+          )}
+          Published
+        </span>
+        {url && (
+          <a
+            href={url}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={`p-1 rounded hover:bg-gray-100 transition-colors ${
+              platform === 'YOUTUBE'
+                ? 'text-red-600 hover:text-red-700'
+                : 'text-pink-600 hover:text-pink-700'
+            }`}
+            title={`View on ${
+              platform === 'YOUTUBE' ? 'YouTube Shorts' : 'Instagram Reels'
+            }`}
+          >
+            <ExternalLinkIcon className='w-3.5 h-3.5' />
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  if (upper === 'SCHEDULED') {
+    return (
+      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200'>
+        <span className='w-1.5 h-1.5 rounded-full bg-purple-500' />
+        Scheduled
+      </span>
+    );
+  }
+
+  if (upper === 'UPLOADING') {
+    return (
+      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200'>
+        <span className='w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse' />
+        Uploading...
+      </span>
+    );
+  }
+
+  if (upper === 'FAILED') {
+    return (
+      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200'>
+        Failed
+      </span>
+    );
+  }
+
+  return (
+    <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
+      Not Uploaded
     </span>
   );
 };
@@ -133,6 +220,26 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
         accessorKey: 'status',
         header: 'Status',
         cell: ({ row }) => getClipStatusBadge(row.getValue('status')),
+      },
+      {
+        id: 'youtubePublishing',
+        header: 'YouTube Shorts',
+        cell: ({ row }) =>
+          getSocialStatusBadge(
+            row.original.youtubeStatus,
+            row.original.youtubeUrl,
+            'YOUTUBE'
+          ),
+      },
+      {
+        id: 'instagramPublishing',
+        header: 'Instagram Reels',
+        cell: ({ row }) =>
+          getSocialStatusBadge(
+            row.original.instagramStatus,
+            row.original.instagramUrl,
+            'INSTAGRAM'
+          ),
       },
       {
         accessorKey: 'duration',

@@ -16,6 +16,7 @@ import {
   ProjectFormPage,
   ProjectDetailsPage,
   ShortsFormPage,
+  AutomationsPage,
 } from './pages';
 
 
@@ -97,8 +98,11 @@ const App = () => {
           <Route index element={<PersonaPage />} />
           <Route path='personas' element={<PersonaPage />} />
           <Route path='personas/:id' element={<PersonaDetailsPage />} />
+          <Route path='personas/:id/integrations' element={<PersonaDetailsPage defaultTab='integrations' />} />
+          <Route path='personas/:id/automations' element={<PersonaDetailsPage defaultTab='automations' />} />
           <Route path='persona-details' element={<PersonaDetailsPage />} />
           <Route path='persona-form' element={<PersonaFormPage />} />
+          <Route path='automations' element={<AutomationsPage />} />
           <Route path='projects' element={<ProjectsPage />} />
           <Route path='projects/:id' element={<ProjectDetailsPage />} />
           <Route path='project-details' element={<ProjectDetailsPage />} />
@@ -106,6 +110,21 @@ const App = () => {
           <Route path='project-form' element={<ProjectFormPage />} />
           <Route path='shorts-form' element={<ShortsFormPage />} />
           <Route path='*' element={<ErrorPage />} />
+        </Route>
+
+        {/* Support OAuth redirect to /personas/:id, /personas/:id/integrations, and /personas */}
+        <Route
+          path='/personas'
+          element={
+            <ProtectedRoutes>
+              <DashboardLayout />
+            </ProtectedRoutes>
+          }
+        >
+          <Route index element={<PersonaPage />} />
+          <Route path=':id' element={<PersonaDetailsPage />} />
+          <Route path=':id/integrations' element={<PersonaDetailsPage defaultTab='integrations' />} />
+          <Route path=':id/automations' element={<PersonaDetailsPage defaultTab='automations' />} />
         </Route>
 
 

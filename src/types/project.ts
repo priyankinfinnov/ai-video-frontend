@@ -117,6 +117,11 @@ export interface ShortsClip {
   subtitlesSec?: number | null;
   retryCount: number;
   errorMessage?: string | null;
+  youtubeStatus?: string | null;
+  youtubeUrl?: string | null;
+  instagramStatus?: string | null;
+  instagramUrl?: string | null;
+  instagramMediaId?: string | null;
   createdAt: string;
   updatedAt: string;
   shortsProject?: ShortsProject;
@@ -135,6 +140,12 @@ export interface VideoProject {
   status: string;
   isPublished: boolean;
   publishedLink?: string | null;
+  youtubeStatus?: string | null;
+  youtubeVideoId?: string | null;
+  youtubeUrl?: string | null;
+  youtubeStudioUrl?: string | null;
+  youtubeUploadedAt?: string | null;
+  youtubeErrorMessage?: string | null;
   scriptGenSec?: number | null;
   partsSplittingSec?: number | null;
   ttsRewriteSec?: number | null;

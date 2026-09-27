@@ -24,6 +24,8 @@ import {
 
 export type PersonaTabKey =
   | 'details'
+  | 'integrations'
+  | 'automations'
   | 'script-files'
   | 'visual-files'
   | 'character-sheet'

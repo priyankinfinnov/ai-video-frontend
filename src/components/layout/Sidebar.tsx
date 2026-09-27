@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { UsersIcon, FilmIcon, ScissorsIcon, LogOutIcon } from 'lucide-react';
+import { UsersIcon, FilmIcon, ScissorsIcon, LogOutIcon, ZapIcon } from 'lucide-react';
 import { LogoMark } from '@/assets/svgs';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { removeUserCredentials } from '@/store/auth/authSlice';
@@ -11,11 +11,16 @@ const Sidebar = () => {
   const dispatch = useAppDispatch();
   const userInfo = useAppSelector((store) => store.auth.userInfo);
 
+  const isAutomationsActive = location.pathname.startsWith(
+    '/dashboard/automations'
+  );
+
   const isPersonaActive =
     (location.pathname === '/dashboard' ||
       location.pathname.startsWith('/dashboard/persona')) &&
     !location.pathname.startsWith('/dashboard/project') &&
-    !location.pathname.startsWith('/dashboard/short');
+    !location.pathname.startsWith('/dashboard/short') &&
+    !isAutomationsActive;
 
   const isShortsActive =
     location.pathname.startsWith('/dashboard/shorts') ||
@@ -65,6 +70,20 @@ const Sidebar = () => {
           >
             <UsersIcon className='w-5 h-5' />
             <span className='text-[10px] font-medium tracking-tight'>Personas</span>
+          </Link>
+
+          <Link
+            to='/dashboard/automations'
+            className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all ${
+              isAutomationsActive
+                ? 'bg-primary-600 text-white shadow-sm'
+                : 'text-primary-200 hover:text-white hover:bg-primary-600/50'
+            }`}
+            title='Publishing Automations'
+            data-testid='nav-automations'
+          >
+            <ZapIcon className='w-5 h-5' />
+            <span className='text-[10px] font-medium tracking-tight'>Automations</span>
           </Link>
 
           <Link
