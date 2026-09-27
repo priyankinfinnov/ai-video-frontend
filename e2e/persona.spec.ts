@@ -253,4 +253,92 @@ test.describe('Persona Management E2E', () => {
     await clonedDeleteBtn.click();
     await expect(page.getByText(clonedPersonaName)).not.toBeVisible();
   });
+
+  test('E2E-08: Clicking persona row opens Persona Details page with 5 tabs', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const detailsPersonaName = `Details Persona ${timestamp}`;
+
+    // 1. Create a persona with full asset paths
+    await page.getByTestId('add-persona-button').click();
+    await page.locator('input#persona-name').fill(detailsPersonaName);
+    await page.locator('input#persona-topics').fill('Quantum AI');
+    await page.getByRole('button', { name: 'Add Topic' }).click();
+
+    await page.locator('input#characterSheetPath').fill('/assets/personas/quantum_sheet.png');
+    await page.locator('input#referenceAudioPath').fill('/assets/audio/quantum_voice.mp3');
+    await page.locator('input#writingDnaPath').fill('/assets/prompts/quantum_writing_dna.txt');
+    await page.locator('input#visualDnaPath').fill('/assets/prompts/quantum_visual_dna.txt');
+    await page.locator('input#scriptPromptPath').fill('/assets/prompts/quantum_script_prompt.txt');
+    await page.locator('input#videoPromptPath').fill('/assets/prompts/quantum_video_prompt.txt');
+    await page.locator('input#scriptJudgePath').fill('/assets/prompts/quantum_judge.prompt');
+
+    await page.getByRole('button', { name: 'Create Persona' }).click();
+    await expect(page).toHaveURL(/\/dashboard\/?$/);
+    await expect(page.locator('h1')).toHaveText('Personas');
+
+    // 2. Locate the row and click on it (testing row click navigation)
+    const row = page.locator('tr', { hasText: detailsPersonaName });
+    await expect(row).toBeVisible();
+    await row.click();
+
+    // 3. Verify navigation to /dashboard/personas/:id
+    await expect(page).toHaveURL(/\/dashboard\/personas\/\d+/);
+
+    // 4. Assert Persona Details page elements
+    await expect(page.locator('h1')).toHaveText(detailsPersonaName);
+    await expect(page.getByText('#Quantum AI')).toBeVisible();
+
+    // 5. Verify all 5 tab buttons exist
+    const tabDetails = page.getByTestId('tab-details');
+    const tabScript = page.getByTestId('tab-script-files');
+    const tabVisual = page.getByTestId('tab-visual-files');
+    const tabSheet = page.getByTestId('tab-character-sheet');
+    const tabJudge = page.getByTestId('tab-script-judge');
+
+    await expect(tabDetails).toBeVisible();
+    await expect(tabScript).toBeVisible();
+    await expect(tabVisual).toBeVisible();
+    await expect(tabSheet).toBeVisible();
+    await expect(tabJudge).toBeVisible();
+
+    // 6. Test Script Files tab
+    await tabScript.click();
+    await expect(page).toHaveURL(/.*tab=script-files/);
+    await expect(page.getByText('Script Related Files')).toBeVisible();
+    await expect(page.getByText('/assets/prompts/quantum_writing_dna.txt')).toBeVisible();
+    await expect(page.getByText('/assets/prompts/quantum_script_prompt.txt')).toBeVisible();
+
+    // 7. Test Visual Files tab
+    await tabVisual.click();
+    await expect(page).toHaveURL(/.*tab=visual-files/);
+    await expect(page.getByText('Visual Related Files & Assets')).toBeVisible();
+    await expect(page.getByText('/assets/prompts/quantum_visual_dna.txt')).toBeVisible();
+    await expect(page.getByText('/assets/prompts/quantum_video_prompt.txt')).toBeVisible();
+
+    // 8. Test Character Sheet tab
+    await tabSheet.click();
+    await expect(page).toHaveURL(/.*tab=character-sheet/);
+    await expect(page.getByText('Character Sheet Image')).toBeVisible();
+    await expect(page.getByText('/assets/personas/quantum_sheet.png')).toBeVisible();
+
+    // 9. Test Script Judge tab
+    await tabJudge.click();
+    await expect(page).toHaveURL(/.*tab=script-judge/);
+    await expect(page.getByText('Script Judge File')).toBeVisible();
+    await expect(page.getByText('/assets/prompts/quantum_judge.prompt')).toBeVisible();
+
+    // 10. Test Back to Personas breadcrumb
+    await page.getByText('Personas', { exact: true }).first().click();
+    await expect(page).toHaveURL(/\/dashboard\/personas\/?$/);
+
+    // 11. Cleanup test persona
+    page.on('dialog', async (dialog) => {
+      await dialog.accept();
+    });
+    const cleanupRow = page.locator('tr', { hasText: detailsPersonaName });
+    await cleanupRow.locator('button[title="Delete Persona"]').click();
+    await expect(page.getByText(detailsPersonaName)).not.toBeVisible();
+  });
 });

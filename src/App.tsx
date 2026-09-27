@@ -11,6 +11,7 @@ import {
   VerifyEmailPage,
   PersonaPage,
   PersonaFormPage,
+  PersonaDetailsPage,
   ProjectsPage,
   ProjectFormPage,
   ProjectDetailsPage,
@@ -95,6 +96,8 @@ const App = () => {
           {/* Landing on /dashboard directly opens Persona table */}
           <Route index element={<PersonaPage />} />
           <Route path='personas' element={<PersonaPage />} />
+          <Route path='personas/:id' element={<PersonaDetailsPage />} />
+          <Route path='persona-details' element={<PersonaDetailsPage />} />
           <Route path='persona-form' element={<PersonaFormPage />} />
           <Route path='projects' element={<ProjectsPage />} />
           <Route path='projects/:id' element={<ProjectDetailsPage />} />

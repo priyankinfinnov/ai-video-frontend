@@ -246,7 +246,13 @@ export const ProjectDetailsPage = () => {
           </div>
 
           <p className='text-xs text-gray-500'>
-            Persona: <span className='font-medium text-gray-800'>{project.persona?.name || `#${project.personaId}`}</span>
+            Persona:{' '}
+            <Link
+              to={`/dashboard/personas/${project.personaId}`}
+              className='font-medium text-primary-700 hover:text-primary-800 hover:underline'
+            >
+              {project.persona?.name || `#${project.personaId}`}
+            </Link>
             {project.roughLengthInMins ? ` • Target: ${project.roughLengthInMins}m` : ''}
             {project.wordCount ? ` • ${project.wordCount} words` : ''}
           </p>

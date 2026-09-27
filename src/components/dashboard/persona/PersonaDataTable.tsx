@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { CopyIcon, PenIcon, Trash2Icon } from 'lucide-react';
+import { CopyIcon, EyeIcon, PenIcon, Trash2Icon } from 'lucide-react';
 import { Persona } from '@/types/persona';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ export const PersonaDataTable = ({
   isLoading = false,
   onDelete,
 }: PersonaDataTableProps) => {
+  const navigate = useNavigate();
+
   const columns = useMemo<ColumnDef<Persona>[]>(
     () => [
       {
@@ -27,7 +29,25 @@ export const PersonaDataTable = ({
         cell: ({ row }) => {
           const persona = row.original;
           return (
-            <div className='flex items-center gap-1.5'>
+            <div
+              className='flex items-center gap-1.5'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                asChild
+                variant='tertiary-gray'
+                size='sm'
+                className='h-8 w-8 p-0 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg'
+                title='View Persona Details'
+              >
+                <Link
+                  to={`/dashboard/personas/${persona.id}`}
+                  data-testid={`view-persona-${persona.id}`}
+                >
+                  <EyeIcon className='h-4 w-4' />
+                </Link>
+              </Button>
+
               <Button
                 asChild
                 variant='tertiary-gray'
@@ -173,6 +193,7 @@ export const PersonaDataTable = ({
       columns={columns}
       data={data}
       isLoading={isLoading}
+      onRowClick={(persona) => navigate(`/dashboard/personas/${persona.id}`)}
       emptyMessage='No personas found. Click "Add Persona" to create one.'
     />
   );
