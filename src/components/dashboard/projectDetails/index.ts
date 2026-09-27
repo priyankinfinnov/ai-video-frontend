@@ -4,4 +4,6 @@ export * from './VideoPartAssetsTab';
 export * from './ScriptIterationLogsTab';
 export * from './ShortsProjectsTab';
 export * from './ShortsClipsTab';
+export * from './ShortClipCard';
+export * from './ShortClipModal';
 export * from './VideoPlayerTab';

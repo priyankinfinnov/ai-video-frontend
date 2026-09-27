@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import {
   FilmIcon,
@@ -7,6 +7,10 @@ import {
   ExternalLinkIcon,
   Youtube,
   Instagram,
+  LayoutGrid,
+  List,
+  Filter,
+  Play,
 } from 'lucide-react';
 import { ShortsClip, ShortsClipStatus } from '@/types/project';
 import { DataTable, DataTableFilterBar, DataTablePagination } from '@/components/common';
@@ -14,6 +18,9 @@ import { useGetShortsClipsQuery } from '@/queries/projectQueries';
 import { useAppSelector } from '@/store/store';
 import useDataTableFilters from '@/hooks/useDataTableFilters';
 import { getCreatedDate } from '@/utils/utils';
+import { Button } from '@/components/ui/button';
+import { ShortClipCard } from './ShortClipCard';
+import { ShortClipModal } from './ShortClipModal';
 
 interface ShortsClipsTabProps {
   projectId: number;
@@ -140,6 +147,10 @@ const getSocialStatusBadge = (
 
 export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
   const token = useAppSelector((store) => store.auth.token);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [activePlayingId, setActivePlayingId] = useState<number | null>(null);
+  const [selectedClipForModal, setSelectedClipForModal] = useState<ShortsClip | null>(null);
 
   const {
     page,
@@ -161,18 +172,29 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
   const clipsList = useMemo(() => response?.data || [], [response?.data]);
   const pagination = response?.pagination;
 
-  // Filter client-side by title/viralityReason if searched
+  // Filter client-side by title/viralityReason/status if searched or filtered
   const filteredData = useMemo(() => {
-    if (!debouncedSearch.trim()) return clipsList;
-    const lower = debouncedSearch.toLowerCase();
-    return clipsList.filter(
-      (c) =>
+    return clipsList.filter((c) => {
+      // Status filter
+      if (statusFilter !== 'ALL' && c.status !== statusFilter) {
+        return false;
+      }
+
+      // Search filter
+      if (!debouncedSearch.trim()) return true;
+      const lower = debouncedSearch.toLowerCase();
+      return (
         c.title?.toLowerCase().includes(lower) ||
         c.viralityReason?.toLowerCase().includes(lower) ||
         c.shortsTranscript?.toLowerCase().includes(lower) ||
         String(c.id).includes(lower)
-    );
-  }, [clipsList, debouncedSearch]);
+      );
+    });
+  }, [clipsList, debouncedSearch, statusFilter]);
+
+  const handleTogglePlay = (clipId: number) => {
+    setActivePlayingId((prev) => (prev === clipId ? null : clipId));
+  };
 
   const columns = useMemo<ColumnDef<ShortsClip>[]>(
     () => [
@@ -296,11 +318,22 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
           const videoUrl = `http://localhost:6001/${cleanPath}`;
 
           return (
-            <video
-              src={videoUrl}
-              className='w-16 h-24 object-cover rounded-md border border-gray-200 shadow-xs'
-              controls
-            />
+            <div className='flex items-center gap-2'>
+              <video
+                src={videoUrl}
+                className='w-16 h-24 object-cover rounded-md border border-gray-200 shadow-xs cursor-pointer'
+                onClick={() => setSelectedClipForModal(clip)}
+              />
+              <Button
+                variant='tertiary-gray'
+                size='sm'
+                onClick={() => setSelectedClipForModal(clip)}
+                className='h-8 w-8 p-0 text-gray-500 hover:text-primary-600'
+                title='Inspect Clip'
+              >
+                <Play className='w-4 h-4' />
+              </Button>
+            </div>
           );
         },
       },
@@ -319,31 +352,156 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
 
   return (
     <div className='space-y-4'>
-      <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3'>
+      {/* Header with Title, Search, Filter, and View Switcher */}
+      <div className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-1 border-b border-gray-100'>
         <div>
-          <h3 className='text-sm font-semibold text-gray-900 flex items-center gap-2'>
+          <div className='flex items-center gap-2'>
             <FilmIcon className='w-4 h-4 text-primary-600' />
-            Shorts Viral Clips
-          </h3>
+            <h3 className='text-sm font-semibold text-gray-900'>
+              Shorts Viral Clips
+            </h3>
+            {clipsList.length > 0 && (
+              <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200'>
+                {clipsList.length} {clipsList.length === 1 ? 'Clip' : 'Clips'}
+              </span>
+            )}
+          </div>
           <p className='text-xs text-gray-500 mt-0.5'>
             Carved vertical 9:16 clips with subtitled voiceover and hook rationale.
           </p>
         </div>
 
-        <DataTableFilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder='Filter by title or virality reason...'
-        />
+        {/* Action Controls & Filters */}
+        <div className='flex items-center gap-2.5 flex-wrap w-full md:w-auto justify-start md:justify-end'>
+          {/* Status Dropdown Filter */}
+          <div className='flex items-center gap-1.5'>
+            <Filter className='w-3.5 h-3.5 text-gray-400' />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className='text-xs font-medium border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 shadow-2xs'
+            >
+              <option value='ALL'>All Statuses</option>
+              <option value='COMPLETED'>Completed</option>
+              <option value='BURNING_SUBTITLES_IN_PROGRESS'>Burning Subtitles</option>
+              <option value='CARVING_IN_PROGRESS'>Carving Clip</option>
+              <option value='FAILED'>Failed</option>
+              <option value='PENDING'>Pending</option>
+            </select>
+          </div>
+
+          {/* Search Filter Bar */}
+          <div className='flex-1 sm:w-64 md:w-72'>
+            <DataTableFilterBar
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder='Filter by title, reason, or script...'
+            />
+          </div>
+
+          {/* View Toggle: Grid vs Table */}
+          <div className='flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200'>
+            <button
+              type='button'
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-white text-primary-700 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title='Clips Gallery Grid'
+              data-testid='clips-view-grid'
+            >
+              <LayoutGrid className='w-3.5 h-3.5' />
+              <span>Clips</span>
+            </button>
+            <button
+              type='button'
+              onClick={() => setViewMode('table')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                viewMode === 'table'
+                  ? 'bg-white text-primary-700 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+              title='Tabular Data View'
+              data-testid='clips-view-table'
+            >
+              <List className='w-3.5 h-3.5' />
+              <span>Table</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filteredData}
-        isLoading={isLoading}
-        emptyMessage='No clips generated yet for this project. Once a shorts pipeline runs, carved vertical clips will appear here.'
-      />
+      {/* Main View Area */}
+      {viewMode === 'grid' ? (
+        <div>
+          {isLoading ? (
+            /* Skeleton Loading Grid */
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5'>
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className='bg-white rounded-2xl border border-gray-200 p-3 flex flex-col gap-3 animate-pulse shadow-xs'
+                >
+                  <div className='w-full aspect-[9/16] bg-gray-200 rounded-xl' />
+                  <div className='h-4 bg-gray-200 rounded w-3/4' />
+                  <div className='h-3 bg-gray-100 rounded w-1/2' />
+                </div>
+              ))}
+            </div>
+          ) : filteredData.length === 0 ? (
+            /* Empty State */
+            <div className='text-center py-16 px-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200 max-w-2xl mx-auto space-y-3'>
+              <div className='w-12 h-12 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mx-auto'>
+                <FilmIcon className='w-6 h-6' />
+              </div>
+              <h4 className='text-sm font-semibold text-gray-900'>No Short Clips Found</h4>
+              <p className='text-xs text-gray-500 max-w-md mx-auto'>
+                {search || statusFilter !== 'ALL'
+                  ? 'No clips match your current search or status filter. Try clearing the filter.'
+                  : 'No clips generated yet for this project. Once a shorts pipeline executes, your carved 9:16 vertical clips will appear here ready to preview and publish.'}
+              </p>
+              {(search || statusFilter !== 'ALL') && (
+                <Button
+                  variant='secondary-gray'
+                  size='sm'
+                  onClick={() => {
+                    setSearch('');
+                    setStatusFilter('ALL');
+                  }}
+                  className='text-xs mt-2'
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          ) : (
+            /* Responsive Clips Gallery Grid */
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5'>
+              {filteredData.map((clip) => (
+                <ShortClipCard
+                  key={clip.id}
+                  clip={clip}
+                  onInspect={(c) => setSelectedClipForModal(c)}
+                  isPlaying={activePlayingId === clip.id}
+                  onTogglePlay={handleTogglePlay}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Tabular Data View */
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          isLoading={isLoading}
+          emptyMessage='No clips generated yet for this project. Once a shorts pipeline runs, carved vertical clips will appear here.'
+        />
+      )}
 
+      {/* Pagination (applies to both Grid and Table view) */}
       {pagination && (
         <DataTablePagination
           pagination={pagination}
@@ -351,6 +509,12 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
           onLimitChange={setLimit}
         />
       )}
+
+      {/* Full Detailed Inspector Modal */}
+      <ShortClipModal
+        clip={selectedClipForModal}
+        onClose={() => setSelectedClipForModal(null)}
+      />
     </div>
   );
 };
