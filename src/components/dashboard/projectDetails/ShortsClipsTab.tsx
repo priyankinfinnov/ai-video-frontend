@@ -11,6 +11,8 @@ import {
   List,
   Filter,
   Play,
+  Share2,
+  Loader2,
 } from 'lucide-react';
 import { ShortsClip, ShortsClipStatus } from '@/types/project';
 import { DataTable, DataTableFilterBar, DataTablePagination } from '@/components/common';
@@ -21,9 +23,11 @@ import { getCreatedDate } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { ShortClipCard } from './ShortClipCard';
 import { ShortClipModal } from './ShortClipModal';
+import { ClipUploadModal } from './ClipUploadModal';
 
 interface ShortsClipsTabProps {
   projectId: number;
+  personaId?: number;
 }
 
 const getClipStatusBadge = (status: ShortsClipStatus | string) => {
@@ -76,7 +80,9 @@ const getClipStatusBadge = (status: ShortsClipStatus | string) => {
 const getSocialStatusBadge = (
   status?: string | null,
   url?: string | null,
-  platform: 'YOUTUBE' | 'INSTAGRAM' = 'YOUTUBE'
+  platform: 'YOUTUBE' | 'INSTAGRAM' = 'YOUTUBE',
+  isCompleted: boolean = false,
+  onUpload?: (platform: 'YOUTUBE' | 'INSTAGRAM') => void
 ) => {
   const upper = (status || 'NOT_UPLOADED').toUpperCase();
 
@@ -124,7 +130,7 @@ const getSocialStatusBadge = (
   if (upper === 'UPLOADING') {
     return (
       <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200'>
-        <span className='w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse' />
+        <Loader2 className='w-3 h-3 animate-spin text-blue-600' />
         Uploading...
       </span>
     );
@@ -132,25 +138,68 @@ const getSocialStatusBadge = (
 
   if (upper === 'FAILED') {
     return (
-      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200'>
-        Failed
-      </span>
+      <div className='flex items-center gap-1.5'>
+        <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200'>
+          Failed
+        </span>
+        {isCompleted && onUpload && (
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpload(platform);
+            }}
+            className='px-1.5 py-0.5 rounded text-[11px] font-medium border text-red-700 bg-red-50 hover:bg-red-100 border-red-200 cursor-pointer'
+            title='Retry upload'
+          >
+            Retry
+          </button>
+        )}
+      </div>
     );
   }
 
   return (
-    <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
-      Not Uploaded
-    </span>
+    <div className='flex items-center gap-1.5'>
+      <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
+        Not Uploaded
+      </span>
+      {isCompleted && onUpload && (
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpload(platform);
+          }}
+          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors cursor-pointer ${
+            platform === 'YOUTUBE'
+              ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200'
+              : 'text-pink-700 bg-pink-50 hover:bg-pink-100 border-pink-200'
+          }`}
+          title={`Upload to ${platform === 'YOUTUBE' ? 'YouTube Shorts' : 'Instagram Reels'}`}
+        >
+          {platform === 'YOUTUBE' ? (
+            <Youtube className='w-3 h-3 text-red-600' />
+          ) : (
+            <Instagram className='w-3 h-3 text-pink-600' />
+          )}
+          Post
+        </button>
+      )}
+    </div>
   );
 };
 
-export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
+export const ShortsClipsTab = ({ projectId, personaId }: ShortsClipsTabProps) => {
   const token = useAppSelector((store) => store.auth.token);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [activePlayingId, setActivePlayingId] = useState<number | null>(null);
   const [selectedClipForModal, setSelectedClipForModal] = useState<ShortsClip | null>(null);
+  const [uploadClipTarget, setUploadClipTarget] = useState<{
+    clip: ShortsClip;
+    platform?: 'YOUTUBE' | 'INSTAGRAM';
+  } | null>(null);
 
   const {
     page,
@@ -246,22 +295,74 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
       {
         id: 'youtubePublishing',
         header: 'YouTube Shorts',
-        cell: ({ row }) =>
-          getSocialStatusBadge(
-            row.original.youtubeStatus,
-            row.original.youtubeUrl,
-            'YOUTUBE'
-          ),
+        cell: ({ row }) => {
+          const clip = row.original;
+          return getSocialStatusBadge(
+            clip.youtubeStatus,
+            clip.youtubeUrl,
+            'YOUTUBE',
+            clip.status === 'COMPLETED',
+            (plat) => setUploadClipTarget({ clip, platform: plat })
+          );
+        },
       },
       {
         id: 'instagramPublishing',
         header: 'Instagram Reels',
-        cell: ({ row }) =>
-          getSocialStatusBadge(
-            row.original.instagramStatus,
-            row.original.instagramUrl,
-            'INSTAGRAM'
-          ),
+        cell: ({ row }) => {
+          const clip = row.original;
+          return getSocialStatusBadge(
+            clip.instagramStatus,
+            clip.instagramUrl,
+            'INSTAGRAM',
+            clip.status === 'COMPLETED',
+            (plat) => setUploadClipTarget({ clip, platform: plat })
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => {
+          const clip = row.original;
+          const isCompleted = clip.status === 'COMPLETED';
+          const isUploading =
+            clip.youtubeStatus === 'UPLOADING' ||
+            clip.instagramStatus === 'UPLOADING';
+
+          return (
+            <div className='flex items-center gap-1.5' onClick={(e) => e.stopPropagation()}>
+              <Button
+                variant='secondary-gray'
+                size='sm'
+                onClick={() => setUploadClipTarget({ clip })}
+                disabled={!isCompleted || isUploading}
+                className={`h-7 px-2 text-xs flex items-center gap-1.5 shadow-2xs ${
+                  isUploading
+                    ? 'text-blue-600 bg-blue-50 border-blue-200 cursor-wait'
+                    : isCompleted
+                    ? 'text-purple-700 bg-purple-50 hover:bg-purple-100 border-purple-200 cursor-pointer'
+                    : 'text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed hover:bg-gray-50'
+                }`}
+                title={
+                  isUploading
+                    ? 'Upload currently in progress...'
+                    : !isCompleted
+                    ? `Upload requires COMPLETED status (current: ${clip.status})`
+                    : 'Direct upload to YouTube or Instagram'
+                }
+                data-testid={`table-upload-clip-${clip.id}`}
+              >
+                {isUploading ? (
+                  <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                ) : (
+                  <Share2 className='w-3.5 h-3.5 text-purple-600' />
+                )}
+                <span>Post Now</span>
+              </Button>
+            </div>
+          );
+        },
       },
       {
         accessorKey: 'duration',
@@ -486,6 +587,7 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
                   onInspect={(c) => setSelectedClipForModal(c)}
                   isPlaying={activePlayingId === clip.id}
                   onTogglePlay={handleTogglePlay}
+                  onUpload={(c, plat) => setUploadClipTarget({ clip: c, platform: plat })}
                 />
               ))}
             </div>
@@ -514,6 +616,16 @@ export const ShortsClipsTab = ({ projectId }: ShortsClipsTabProps) => {
       <ShortClipModal
         clip={selectedClipForModal}
         onClose={() => setSelectedClipForModal(null)}
+        onUpload={(c, plat) => setUploadClipTarget({ clip: c, platform: plat })}
+      />
+
+      {/* Direct Social Upload Modal (YouTube Shorts / Instagram Reels) */}
+      <ClipUploadModal
+        isOpen={!!uploadClipTarget}
+        onClose={() => setUploadClipTarget(null)}
+        clip={uploadClipTarget?.clip || null}
+        personaId={personaId}
+        initialPlatform={uploadClipTarget?.platform || 'YOUTUBE'}
       />
     </div>
   );

@@ -1,11 +1,21 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { CopyIcon, PenIcon, ScissorsIcon, Trash2Icon, ExternalLinkIcon, EyeIcon } from 'lucide-react';
+import {
+  CopyIcon,
+  PenIcon,
+  ScissorsIcon,
+  Trash2Icon,
+  ExternalLinkIcon,
+  EyeIcon,
+  Youtube,
+  Loader2,
+} from 'lucide-react';
 import { VideoProject, ProjectType } from '@/types/project';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/common/DataTable';
 import { getCreatedDate } from '@/utils/utils';
+import { ProjectUploadModal } from './ProjectUploadModal';
 
 
 interface ProjectDataTableProps {
@@ -72,10 +82,14 @@ const getStatusBadge = (status: string) => {
   );
 };
 
-const getYoutubeStatusBadge = (project: VideoProject) => {
+const getYoutubeStatusBadge = (
+  project: VideoProject,
+  onUpload?: (project: VideoProject) => void
+) => {
   const status = (project.youtubeStatus || 'NOT_UPLOADED').toUpperCase();
   const studioUrl = project.youtubeStudioUrl;
   const youtubeUrl = project.youtubeUrl;
+  const isCompleted = project.status === 'COMPLETED';
 
   if (status === 'PUBLISHED') {
     return (
@@ -144,19 +158,50 @@ const getYoutubeStatusBadge = (project: VideoProject) => {
 
   if (status === 'FAILED') {
     return (
-      <span
-        className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200'
-        title={project.youtubeErrorMessage || 'Upload failed'}
-      >
-        Failed
-      </span>
+      <div className='flex items-center gap-1.5'>
+        <span
+          className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200'
+          title={project.youtubeErrorMessage || 'Upload failed'}
+        >
+          Failed
+        </span>
+        {isCompleted && onUpload && (
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpload(project);
+            }}
+            className='px-2 py-0.5 rounded text-[11px] font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer'
+            title='Retry direct upload'
+          >
+            Retry
+          </button>
+        )}
+      </div>
     );
   }
 
   return (
-    <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
-      Not Uploaded
-    </span>
+    <div className='flex items-center gap-1.5'>
+      <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
+        Not Uploaded
+      </span>
+      {isCompleted && onUpload && (
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpload(project);
+          }}
+          className='inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer'
+          title='Directly upload video to YouTube'
+        >
+          <Youtube className='w-3 h-3 text-red-600' />
+          Upload
+        </button>
+      )}
+    </div>
   );
 };
 
@@ -165,6 +210,8 @@ export const ProjectDataTable = ({
   isLoading = false,
   onDelete,
 }: ProjectDataTableProps) => {
+  const [selectedProjectForUpload, setSelectedProjectForUpload] = useState<VideoProject | null>(null);
+
   const columns = useMemo<ColumnDef<VideoProject>[]>(
     () => [
       {
@@ -172,6 +219,9 @@ export const ProjectDataTable = ({
         header: 'Actions',
         cell: ({ row }) => {
           const project = row.original;
+          const isCompleted = project.status === 'COMPLETED';
+          const isUploading = project.youtubeStatus === 'UPLOADING';
+
           return (
             <div className='flex items-center gap-1' onClick={(e) => e.stopPropagation()}>
               <Button
@@ -232,6 +282,34 @@ export const ProjectDataTable = ({
                 >
                   <ScissorsIcon className='h-4 w-4' />
                 </Link>
+              </Button>
+
+              <Button
+                variant='tertiary-gray'
+                size='sm'
+                onClick={() => setSelectedProjectForUpload(project)}
+                disabled={!isCompleted || isUploading}
+                className={`h-8 w-8 p-0 rounded-lg ${
+                  isUploading
+                    ? 'text-blue-500 bg-blue-50 cursor-wait'
+                    : isCompleted
+                    ? 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                    : 'text-gray-300 hover:bg-transparent cursor-not-allowed'
+                }`}
+                title={
+                  isUploading
+                    ? 'Uploading to YouTube...'
+                    : !isCompleted
+                    ? `Upload requires COMPLETED status (current: ${project.status})`
+                    : 'Upload directly to YouTube'
+                }
+                data-testid={`upload-project-${project.id}`}
+              >
+                {isUploading ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <Youtube className='h-4 w-4' />
+                )}
               </Button>
 
               {onDelete && (
@@ -331,7 +409,8 @@ export const ProjectDataTable = ({
       {
         id: 'youtubePublishing',
         header: 'YouTube Publishing',
-        cell: ({ row }) => getYoutubeStatusBadge(row.original),
+        cell: ({ row }) =>
+          getYoutubeStatusBadge(row.original, (p) => setSelectedProjectForUpload(p)),
       },
       {
         accessorKey: 'isPublished',
@@ -401,12 +480,19 @@ export const ProjectDataTable = ({
   const navigate = useNavigate();
 
   return (
-    <DataTable
-      columns={columns}
-      data={data}
-      isLoading={isLoading}
-      onRowClick={(project) => navigate(`/dashboard/projects/${project.id}`)}
-      emptyMessage='No video projects found. Click "Add Project" to create your first pipeline.'
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={isLoading}
+        onRowClick={(project) => navigate(`/dashboard/projects/${project.id}`)}
+        emptyMessage='No video projects found. Click "Add Project" to create your first pipeline.'
+      />
+      <ProjectUploadModal
+        isOpen={!!selectedProjectForUpload}
+        onClose={() => setSelectedProjectForUpload(null)}
+        project={selectedProjectForUpload}
+      />
+    </>
   );
 };

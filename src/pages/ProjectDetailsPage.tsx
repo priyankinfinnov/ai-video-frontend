@@ -12,6 +12,7 @@ import {
   PenIcon,
   ExternalLinkIcon,
   YoutubeIcon,
+  Loader2,
 } from 'lucide-react';
 import { useGetProjectQuery } from '@/queries/projectQueries';
 import { useAppSelector } from '@/store/store';
@@ -25,6 +26,7 @@ import {
   ShortsClipsTab,
   VideoPlayerTab,
 } from '@/components/dashboard/projectDetails';
+import { ProjectUploadModal } from '@/components/dashboard/projects/ProjectUploadModal';
 import { ProjectType } from '@/types/project';
 
 type TabKey =
@@ -104,6 +106,7 @@ export const ProjectDetailsPage = () => {
   // Tab state derived from URL
   const initialTab = (searchParams.get('tab') as TabKey) || 'details';
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab') as TabKey;
@@ -198,6 +201,45 @@ export const ProjectDetailsPage = () => {
         </div>
 
         <div className='flex items-center gap-2'>
+          <Button
+            onClick={() => setIsUploadModalOpen(true)}
+            disabled={project.status !== 'COMPLETED' || project.youtubeStatus === 'UPLOADING'}
+            size='sm'
+            className={`text-xs flex items-center gap-1.5 shadow-xs ${
+              project.youtubeStatus === 'UPLOADING'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-wait'
+                : project.status === 'COMPLETED'
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 hover:bg-gray-100'
+            }`}
+            title={
+              project.youtubeStatus === 'UPLOADING'
+                ? 'Uploading to YouTube...'
+                : project.status !== 'COMPLETED'
+                ? `Upload requires COMPLETED status (current: ${project.status})`
+                : 'Upload 1440p Master Video to YouTube'
+            }
+            data-testid='project-header-upload-youtube-btn'
+          >
+            {project.youtubeStatus === 'UPLOADING' ? (
+              <>
+                <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                <span>Uploading...</span>
+              </>
+            ) : (
+              <>
+                <YoutubeIcon className='w-3.5 h-3.5 fill-current' />
+                <span>
+                  {project.youtubeStatus === 'PUBLISHED'
+                    ? 'Re-upload'
+                    : project.youtubeStatus === 'DRAFT'
+                    ? 'Post Live'
+                    : 'Upload to YouTube'}
+                </span>
+              </>
+            )}
+          </Button>
+
           <Button
             asChild
             variant='secondary-gray'
@@ -368,13 +410,19 @@ export const ProjectDetailsPage = () => {
         )}
 
         {activeTab === 'shorts-clips' && (
-          <ShortsClipsTab projectId={project.id} />
+          <ShortsClipsTab projectId={project.id} personaId={project.personaId} />
         )}
 
         {activeTab === 'video-480p' && (
           <VideoPlayerTab project={project} />
         )}
       </div>
+
+      <ProjectUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        project={project}
+      />
     </div>
   );
 };

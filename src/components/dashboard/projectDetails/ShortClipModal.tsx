@@ -18,6 +18,7 @@ import {
   Instagram,
   AlertCircle,
   Share2,
+  Loader2,
 } from 'lucide-react';
 import { ShortsClip, ShortsClipStatus } from '@/types/project';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { getCreatedDate } from '@/utils/utils';
 interface ShortClipModalProps {
   clip: ShortsClip | null;
   onClose: () => void;
+  onUpload?: (clip: ShortsClip, platform?: 'YOUTUBE' | 'INSTAGRAM') => void;
 }
 
 const getModalStatusBadge = (status: ShortsClipStatus | string) => {
@@ -67,13 +69,22 @@ const getModalStatusBadge = (status: ShortsClipStatus | string) => {
   );
 };
 
-export const ShortClipModal: React.FC<ShortClipModalProps> = ({ clip, onClose }) => {
+export const ShortClipModal: React.FC<ShortClipModalProps> = ({
+  clip,
+  onClose,
+  onUpload,
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
   if (!clip) return null;
+
+  const isCompleted = clip.status === 'COMPLETED';
+  const isYoutubeUploading = clip.youtubeStatus === 'UPLOADING';
+  const isInstagramUploading = clip.instagramStatus === 'UPLOADING';
+  const isAnyUploading = isYoutubeUploading || isInstagramUploading;
 
   const videoPath = clip.videoPath || clip.rawVideoPath;
   const normalizedPath = videoPath ? videoPath.replace(/\\/g, '/') : '';
@@ -259,21 +270,44 @@ export const ShortClipModal: React.FC<ShortClipModalProps> = ({ clip, onClose })
                     <div className='flex flex-col'>
                       <span className='text-xs font-medium text-gray-900'>YouTube Shorts</span>
                       <span className='text-[10px] text-gray-500'>
-                        {clip.youtubeStatus || 'Not Uploaded'}
+                        {isYoutubeUploading ? 'Uploading...' : clip.youtubeStatus || 'Not Uploaded'}
                       </span>
                     </div>
                   </div>
-                  {clip.youtubeUrl && (
-                    <a
-                      href={clip.youtubeUrl}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors'
-                      title='Open YouTube Short'
-                    >
-                      <ExternalLink className='w-3.5 h-3.5' />
-                    </a>
-                  )}
+                  <div className='flex items-center gap-1.5'>
+                    {clip.youtubeUrl && (
+                      <a
+                        href={clip.youtubeUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors'
+                        title='Open YouTube Short'
+                      >
+                        <ExternalLink className='w-3.5 h-3.5' />
+                      </a>
+                    )}
+                    {isYoutubeUploading ? (
+                      <span className='p-1 text-blue-500' title='Uploading to YouTube...'>
+                        <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                      </span>
+                    ) : (
+                      onUpload && (
+                        <button
+                          type='button'
+                          onClick={() => onUpload(clip, 'YOUTUBE')}
+                          disabled={!isCompleted}
+                          className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
+                            isCompleted
+                              ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200 cursor-pointer'
+                              : 'text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed'
+                          }`}
+                          title={!isCompleted ? 'Requires COMPLETED status' : 'Direct upload to YouTube'}
+                        >
+                          {clip.youtubeStatus === 'PUBLISHED' ? 'Post Again' : 'Upload'}
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
 
                 {/* Instagram Reels */}
@@ -283,21 +317,44 @@ export const ShortClipModal: React.FC<ShortClipModalProps> = ({ clip, onClose })
                     <div className='flex flex-col'>
                       <span className='text-xs font-medium text-gray-900'>Instagram Reels</span>
                       <span className='text-[10px] text-gray-500'>
-                        {clip.instagramStatus || 'Not Uploaded'}
+                        {isInstagramUploading ? 'Uploading...' : clip.instagramStatus || 'Not Uploaded'}
                       </span>
                     </div>
                   </div>
-                  {clip.instagramUrl && (
-                    <a
-                      href={clip.instagramUrl}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='p-1 text-pink-600 hover:text-pink-700 hover:bg-pink-50 rounded-md transition-colors'
-                      title='Open Instagram Reel'
-                    >
-                      <ExternalLink className='w-3.5 h-3.5' />
-                    </a>
-                  )}
+                  <div className='flex items-center gap-1.5'>
+                    {clip.instagramUrl && (
+                      <a
+                        href={clip.instagramUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='p-1 text-pink-600 hover:text-pink-700 hover:bg-pink-50 rounded-md transition-colors'
+                        title='Open Instagram Reel'
+                      >
+                        <ExternalLink className='w-3.5 h-3.5' />
+                      </a>
+                    )}
+                    {isInstagramUploading ? (
+                      <span className='p-1 text-blue-500' title='Uploading to Instagram...'>
+                        <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                      </span>
+                    ) : (
+                      onUpload && (
+                        <button
+                          type='button'
+                          onClick={() => onUpload(clip, 'INSTAGRAM')}
+                          disabled={!isCompleted}
+                          className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
+                            isCompleted
+                              ? 'text-pink-700 bg-pink-50 hover:bg-pink-100 border-pink-200 cursor-pointer'
+                              : 'text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed'
+                          }`}
+                          title={!isCompleted ? 'Requires COMPLETED status' : 'Direct post to Instagram Reels'}
+                        >
+                          {clip.instagramStatus === 'PUBLISHED' ? 'Post Again' : 'Post Reel'}
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -309,6 +366,39 @@ export const ShortClipModal: React.FC<ShortClipModalProps> = ({ clip, onClose })
               Created {getCreatedDate(clip.createdAt)}
             </span>
             <div className='flex items-center gap-2'>
+              {onUpload && (
+                <Button
+                  size='sm'
+                  onClick={() => onUpload(clip)}
+                  disabled={!isCompleted || isAnyUploading}
+                  className={`text-xs flex items-center gap-1.5 shadow-sm ${
+                    isAnyUploading
+                      ? 'bg-blue-600 text-white cursor-wait'
+                      : isCompleted
+                      ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                      : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed hover:bg-gray-100'
+                  }`}
+                  title={
+                    !isCompleted
+                      ? `Upload requires COMPLETED status (current: ${clip.status})`
+                      : 'Direct Upload to Social Media'
+                  }
+                  data-testid={`modal-upload-clip-${clip.id}`}
+                >
+                  {isAnyUploading ? (
+                    <>
+                      <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className='w-3.5 h-3.5' />
+                      <span>Upload / Post Now</span>
+                    </>
+                  )}
+                </Button>
+              )}
+
               {videoUrl && (
                 <>
                   <Button
@@ -333,7 +423,7 @@ export const ShortClipModal: React.FC<ShortClipModalProps> = ({ clip, onClose })
                   <Button
                     asChild
                     size='sm'
-                    className='bg-primary-600 hover:bg-primary-700 text-white text-xs flex items-center gap-1.5 shadow-sm'
+                    className='bg-gray-900 hover:bg-gray-800 text-white text-xs flex items-center gap-1.5 shadow-sm'
                   >
                     <a
                       href={videoUrl}

@@ -12,10 +12,13 @@ import {
   PenIcon,
   PlayIcon,
   SparklesIcon,
+  Youtube,
+  Loader2,
 } from 'lucide-react';
 import { VideoProject, ProjectType } from '@/types/project';
 import { Button } from '@/components/ui/button';
 import { getCreatedDate } from '@/utils/utils';
+import { ProjectUploadModal } from '@/components/dashboard/projects/ProjectUploadModal';
 
 interface ProjectDetailsOverviewProps {
   project: VideoProject;
@@ -54,6 +57,10 @@ export const ProjectDetailsOverview = ({
 }: ProjectDetailsOverviewProps) => {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const isCompleted = project.status === 'COMPLETED';
+  const isUploading = project.youtubeStatus === 'UPLOADING';
 
   const copyToClipboard = (text: string, type: 'prompt' | 'script') => {
     navigator.clipboard.writeText(text);
@@ -110,6 +117,44 @@ export const ProjectDetailsOverview = ({
 
         <div className='flex items-center gap-2.5 w-full sm:w-auto flex-wrap'>
           <Button
+            onClick={() => setIsUploadModalOpen(true)}
+            disabled={!isCompleted || isUploading}
+            className={`shadow-sm flex items-center gap-1.5 text-xs ${
+              isUploading
+                ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-wait'
+                : isCompleted
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 hover:bg-gray-100'
+            }`}
+            title={
+              isUploading
+                ? 'Uploading to YouTube...'
+                : !isCompleted
+                ? `Upload requires COMPLETED status (current: ${project.status})`
+                : 'Upload 1440p Master Video to YouTube'
+            }
+            data-testid='project-overview-upload-youtube-btn'
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                <span>Uploading...</span>
+              </>
+            ) : (
+              <>
+                <Youtube className='w-3.5 h-3.5 fill-current' />
+                <span>
+                  {project.youtubeStatus === 'PUBLISHED'
+                    ? 'Re-upload / Post'
+                    : project.youtubeStatus === 'DRAFT'
+                    ? 'Post Live'
+                    : 'Upload to YouTube'}
+                </span>
+              </>
+            )}
+          </Button>
+
+          <Button
             onClick={onSwitchToVideoTab}
             className='bg-primary-600 hover:bg-primary-700 text-white shadow-sm flex items-center gap-1.5 text-xs'
           >
@@ -144,7 +189,7 @@ export const ProjectDetailsOverview = ({
       </div>
 
       {/* Grid of Key Info Cards */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4'>
         <div className='p-4 rounded-xl border border-gray-200 bg-white shadow-sm'>
           <p className='text-xs font-medium text-gray-500 uppercase tracking-wider'>
             Pipeline Status
@@ -155,6 +200,80 @@ export const ProjectDetailsOverview = ({
               {project.status.replace(/_/g, ' ').toLowerCase()}
             </span>
           </div>
+        </div>
+
+        {/* YouTube Distribution Card */}
+        <div className='p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between'>
+          <div>
+            <p className='text-xs font-medium text-gray-500 uppercase tracking-wider flex items-center gap-1.5'>
+              <Youtube className='w-3.5 h-3.5 text-red-600' />
+              YouTube Status
+            </p>
+            <div className='mt-2 flex items-center gap-2'>
+              {project.youtubeStatus === 'PUBLISHED' ? (
+                <div className='flex items-center gap-1.5'>
+                  <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200'>
+                    <span className='w-1.5 h-1.5 rounded-full bg-emerald-500' />
+                    Published
+                  </span>
+                  {project.youtubeUrl && (
+                    <a
+                      href={project.youtubeUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-red-600 hover:text-red-700'
+                      title='Watch on YouTube'
+                    >
+                      <ExternalLinkIcon className='w-3.5 h-3.5' />
+                    </a>
+                  )}
+                </div>
+              ) : project.youtubeStatus === 'DRAFT' ? (
+                <div className='flex items-center gap-1.5'>
+                  <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200'>
+                    <span className='w-1.5 h-1.5 rounded-full bg-blue-500' />
+                    Studio Draft
+                  </span>
+                  {project.youtubeStudioUrl && (
+                    <a
+                      href={project.youtubeStudioUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-xs font-medium text-red-600 hover:underline inline-flex items-center gap-0.5'
+                      title='Open draft in YouTube Studio'
+                    >
+                      Studio
+                      <ExternalLinkIcon className='w-3 h-3' />
+                    </a>
+                  )}
+                </div>
+              ) : project.youtubeStatus === 'UPLOADING' ? (
+                <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200'>
+                  <Loader2 className='w-3 h-3 animate-spin text-blue-600' />
+                  Uploading...
+                </span>
+              ) : project.youtubeStatus === 'FAILED' ? (
+                <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200' title={project.youtubeErrorMessage || 'Upload failed'}>
+                  Failed
+                </span>
+              ) : (
+                <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500'>
+                  Not Uploaded
+                </span>
+              )}
+            </div>
+          </div>
+
+          {isCompleted && !isUploading && (
+            <button
+              type='button'
+              onClick={() => setIsUploadModalOpen(true)}
+              className='mt-2.5 text-[11px] font-semibold text-red-600 hover:text-red-700 flex items-center gap-1 hover:underline cursor-pointer'
+            >
+              <Youtube className='w-3 h-3' />
+              {project.youtubeStatus === 'PUBLISHED' ? 'Post Again →' : 'Upload to YouTube →'}
+            </button>
+          )}
         </div>
 
         <div className='p-4 rounded-xl border border-gray-200 bg-white shadow-sm'>
@@ -345,6 +464,12 @@ export const ProjectDetailsOverview = ({
           ))}
         </div>
       </div>
+
+      <ProjectUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        project={project}
+      />
     </div>
   );
 };

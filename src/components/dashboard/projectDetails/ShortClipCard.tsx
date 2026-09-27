@@ -17,6 +17,8 @@ import {
   Instagram,
   AlertCircle,
   FileText,
+  Share2,
+  Loader2,
 } from 'lucide-react';
 import { ShortsClip, ShortsClipStatus } from '@/types/project';
 import { getCreatedDate } from '@/utils/utils';
@@ -26,6 +28,7 @@ interface ShortClipCardProps {
   onInspect: (clip: ShortsClip) => void;
   isPlaying: boolean;
   onTogglePlay: (clipId: number) => void;
+  onUpload?: (clip: ShortsClip, platform?: 'YOUTUBE' | 'INSTAGRAM') => void;
 }
 
 const getClipBadge = (status: ShortsClipStatus | string) => {
@@ -72,12 +75,12 @@ export const ShortClipCard: React.FC<ShortClipCardProps> = ({
   onInspect,
   isPlaying,
   onTogglePlay,
+  onUpload,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
   const [videoError, setVideoError] = useState(false);
 
   const videoPath = clip.videoPath || clip.rawVideoPath;
@@ -114,7 +117,6 @@ export const ShortClipCard: React.FC<ShortClipCardProps> = ({
     if (!videoRef.current) return;
     const current = videoRef.current.currentTime;
     const dur = videoRef.current.duration || clip.duration || 1;
-    setCurrentTime(current);
     setProgress((current / dur) * 100);
   };
 
@@ -414,32 +416,67 @@ export const ShortClipCard: React.FC<ShortClipCardProps> = ({
                 </div>
               </div>
 
-              {/* Social publishing links if available */}
-              <div className='flex items-center gap-1.5 text-[10px]'>
-                {clip.youtubeUrl && (
+              {/* Social publishing links & quick triggers */}
+              <div className='flex items-center gap-1.5 text-[10px] flex-wrap'>
+                {/* YouTube Shorts */}
+                {clip.youtubeStatus === 'UPLOADING' ? (
+                  <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-950/70 text-blue-300 border border-blue-800 animate-pulse'>
+                    <Loader2 className='w-3 h-3 animate-spin' />
+                    <span>YouTube</span>
+                  </span>
+                ) : clip.youtubeUrl ? (
                   <a
                     href={clip.youtubeUrl}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-950/60 text-red-300 border border-red-800 hover:bg-red-900/60'
+                    title='Watch on YouTube Shorts'
                   >
                     <Youtube className='w-3 h-3 text-red-400' />
                     <span>YouTube</span>
                     <ExternalLink className='w-2.5 h-2.5' />
                   </a>
-                )}
-                {clip.instagramUrl && (
+                ) : clip.status === 'COMPLETED' && onUpload ? (
+                  <button
+                    type='button'
+                    onClick={() => onUpload(clip, 'YOUTUBE')}
+                    className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-950/50 hover:bg-red-900/70 text-red-300 border border-red-800/80 transition-colors cursor-pointer'
+                    title='Direct upload to YouTube Shorts'
+                  >
+                    <Youtube className='w-3 h-3 text-red-400' />
+                    <span>+ YouTube</span>
+                  </button>
+                ) : null}
+
+                {/* Instagram Reels */}
+                {clip.instagramStatus === 'UPLOADING' ? (
+                  <span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-950/70 text-blue-300 border border-blue-800 animate-pulse'>
+                    <Loader2 className='w-3 h-3 animate-spin' />
+                    <span>Reels</span>
+                  </span>
+                ) : clip.instagramUrl ? (
                   <a
                     href={clip.instagramUrl}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-950/60 text-pink-300 border border-pink-800 hover:bg-pink-900/60'
+                    title='Watch on Instagram Reels'
                   >
                     <Instagram className='w-3 h-3 text-pink-400' />
                     <span>Reels</span>
                     <ExternalLink className='w-2.5 h-2.5' />
                   </a>
-                )}
+                ) : clip.status === 'COMPLETED' && onUpload ? (
+                  <button
+                    type='button'
+                    onClick={() => onUpload(clip, 'INSTAGRAM')}
+                    className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-950/50 hover:bg-pink-900/70 text-pink-300 border border-pink-800/80 transition-colors cursor-pointer'
+                    title='Direct post to Instagram Reels'
+                  >
+                    <Instagram className='w-3 h-3 text-pink-400' />
+                    <span>+ Reels</span>
+                  </button>
+                ) : null}
               </div>
 
               {/* Action buttons */}
@@ -452,6 +489,35 @@ export const ShortClipCard: React.FC<ShortClipCardProps> = ({
                   <Play className='w-3.5 h-3.5 fill-current' />
                   <span>Play Clip</span>
                 </button>
+
+                {onUpload && (
+                  <button
+                    type='button'
+                    onClick={() => onUpload(clip)}
+                    disabled={clip.status !== 'COMPLETED' || clip.youtubeStatus === 'UPLOADING' || clip.instagramStatus === 'UPLOADING'}
+                    className={`p-1.5 rounded-lg border transition-colors ${
+                      clip.youtubeStatus === 'UPLOADING' || clip.instagramStatus === 'UPLOADING'
+                        ? 'bg-blue-950/70 border-blue-800 text-blue-400 cursor-wait'
+                        : clip.status === 'COMPLETED'
+                        ? 'bg-purple-900/60 hover:bg-purple-800 text-purple-200 border-purple-700 hover:text-white cursor-pointer'
+                        : 'bg-gray-800/50 border-gray-700 text-gray-500 cursor-not-allowed'
+                    }`}
+                    title={
+                      clip.youtubeStatus === 'UPLOADING' || clip.instagramStatus === 'UPLOADING'
+                        ? 'Upload currently in progress...'
+                        : clip.status !== 'COMPLETED'
+                        ? `Upload requires COMPLETED status (current: ${clip.status})`
+                        : 'Direct Upload / Post to YouTube or Instagram'
+                    }
+                    data-testid={`card-upload-clip-${clip.id}`}
+                  >
+                    {clip.youtubeStatus === 'UPLOADING' || clip.instagramStatus === 'UPLOADING' ? (
+                      <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                    ) : (
+                      <Share2 className='w-3.5 h-3.5' />
+                    )}
+                  </button>
+                )}
 
                 <button
                   type='button'

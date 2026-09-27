@@ -219,3 +219,21 @@ export interface ProjectFilterState {
   page: number;
   limit: number;
 }
+
+export interface UploadProjectRequest {
+  teamId?: number;
+  platform?: 'YOUTUBE';
+  uploadType?: 'DRAFT' | 'ACTUAL_POST';
+  customTitle?: string;
+  customTags?: string[];
+  titlePrefix?: string;
+}
+
+export interface UploadShortsClipRequest {
+  teamId?: number;
+  platform: 'YOUTUBE' | 'INSTAGRAM';
+  uploadType?: 'DRAFT' | 'ACTUAL_POST';
+  customTitle?: string;
+  customCaption?: string;
+  customTags?: string[];
+}

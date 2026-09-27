@@ -6,4 +6,5 @@ export * from './ShortsProjectsTab';
 export * from './ShortsClipsTab';
 export * from './ShortClipCard';
 export * from './ShortClipModal';
+export * from './ClipUploadModal';
 export * from './VideoPlayerTab';
