@@ -8,7 +8,7 @@ interface UseDataTableFiltersOptions {
 
 export function useDataTableFilters({
   initialPage = 1,
-  initialLimit = 10,
+  initialLimit = 50,
   debounceMs = 300,
 }: UseDataTableFiltersOptions = {}) {
   const [page, setPage] = useState(initialPage);

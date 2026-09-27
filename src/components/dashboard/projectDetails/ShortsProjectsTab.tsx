@@ -58,7 +58,7 @@ export const ShortsProjectsTab = ({ projectId }: ShortsProjectsTabProps) => {
     search,
     setSearch,
     debouncedSearch,
-  } = useDataTableFilters({ initialPage: 1, initialLimit: 10 });
+  } = useDataTableFilters({ initialPage: 1, initialLimit: 50 });
 
   const { data: response, isLoading } = useGetShortsProjectsQuery({
     token,

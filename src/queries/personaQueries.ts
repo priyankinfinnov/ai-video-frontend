@@ -34,7 +34,7 @@ function extractTeamId(token: string | null): number | undefined {
 export const useGetPersonasQuery = ({
   token,
   page = 1,
-  limit = 10,
+  limit = 50,
 }: UseGetPersonasParams) => {
   const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
   const teamId = extractTeamId(activeToken);

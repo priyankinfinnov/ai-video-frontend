@@ -20,7 +20,7 @@ export const DataTablePagination = ({
   pagination,
   onPageChange,
   onLimitChange,
-  pageSizeOptions = [10, 20, 50],
+  pageSizeOptions = [10, 20, 50, 100],
 }: DataTablePaginationProps) => {
   if (!pagination) {
     return null;

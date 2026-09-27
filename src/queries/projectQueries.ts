@@ -83,7 +83,7 @@ function extractTeamId(token: string | null): number | undefined {
 export const useGetProjectsQuery = ({
   token,
   page = 1,
-  limit = 10,
+  limit = 50,
 }: UseGetProjectsParams) => {
   const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
   const teamId = extractTeamId(activeToken);
@@ -132,7 +132,7 @@ export const useGetShortsProjectsQuery = ({
   token,
   videoProjectId,
   page = 1,
-  limit = 10,
+  limit = 50,
 }: UseGetShortsProjectsParams) => {
   const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
   const teamId = extractTeamId(activeToken);
@@ -182,7 +182,7 @@ export const useGetVideoPartsQuery = ({
   token,
   videoProjectId,
   page = 1,
-  limit = 10,
+  limit = 50,
 }: UseGetVideoPartsParams) => {
   const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
   const teamId = extractTeamId(activeToken);
@@ -208,7 +208,7 @@ export const useGetVideoPartAssetsQuery = ({
   videoProjectId,
   videoPartId,
   page = 1,
-  limit = 10,
+  limit = 50,
 }: UseGetVideoPartAssetsParams) => {
   const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
   const teamId = extractTeamId(activeToken);
@@ -234,7 +234,7 @@ export const useGetScriptIterationLogsQuery = ({
   token,
   videoProjectId,
   page = 1,
-  limit = 10,
+  limit = 50,
 }: UseGetScriptIterationLogsParams) => {
   const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
   const teamId = extractTeamId(activeToken);
@@ -260,7 +260,7 @@ export const useGetShortsClipsQuery = ({
   videoProjectId,
   shortsProjectId,
   page = 1,
-  limit = 10,
+  limit = 50,
 }: UseGetShortsClipsParams) => {
   const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
   const teamId = extractTeamId(activeToken);

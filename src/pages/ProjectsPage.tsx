@@ -56,7 +56,7 @@ export const ProjectsPage = ({ defaultTab }: ProjectsPageProps) => {
     search,
     setSearch,
     debouncedSearch,
-  } = useDataTableFilters({ initialPage: 1, initialLimit: 10 });
+  } = useDataTableFilters({ initialPage: 1, initialLimit: 50 });
 
   // Projects queries
   const {

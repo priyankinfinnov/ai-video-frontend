@@ -50,7 +50,7 @@ export const ScriptIterationLogsTab = ({ projectId }: ScriptIterationLogsTabProp
     search,
     setSearch,
     debouncedSearch,
-  } = useDataTableFilters({ initialPage: 1, initialLimit: 10 });
+  } = useDataTableFilters({ initialPage: 1, initialLimit: 50 });
 
   const { data: response, isLoading } = useGetScriptIterationLogsQuery({
     token,
