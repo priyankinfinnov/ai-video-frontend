@@ -114,7 +114,7 @@ const getYoutubeStatusBadge = (
     );
   }
 
-  if (status === 'DRAFT') {
+  if (status === 'DRAFT' || status === 'DRAFT_UPLOADED') {
     return (
       <div className='flex items-center gap-1.5'>
         <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200'>
@@ -134,7 +134,41 @@ const getYoutubeStatusBadge = (
             <ExternalLinkIcon className='w-3 h-3' />
           </a>
         )}
+        {youtubeUrl && (
+          <a
+            href={youtubeUrl}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='p-1 rounded text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors'
+            title='Preview video on YouTube'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLinkIcon className='w-3.5 h-3.5' />
+          </a>
+        )}
+        {isCompleted && onUpload && (
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpload(project);
+            }}
+            className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer'
+            title='Publish live to YouTube'
+          >
+            Post Live
+          </button>
+        )}
       </div>
+    );
+  }
+
+  if (status === 'QUEUED') {
+    return (
+      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200'>
+        <span className='w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse' />
+        Queued
+      </span>
     );
   }
 
@@ -220,7 +254,9 @@ export const ProjectDataTable = ({
         cell: ({ row }) => {
           const project = row.original;
           const isCompleted = project.status === 'COMPLETED';
-          const isUploading = project.youtubeStatus === 'UPLOADING';
+          const isUploading = project.youtubeStatus === 'UPLOADING' || project.youtubeStatus === 'QUEUED';
+          const isDraft = project.youtubeStatus === 'DRAFT' || project.youtubeStatus === 'DRAFT_UPLOADED';
+          const isPublished = project.youtubeStatus === 'PUBLISHED';
 
           return (
             <div className='flex items-center gap-1' onClick={(e) => e.stopPropagation()}>
@@ -301,6 +337,10 @@ export const ProjectDataTable = ({
                     ? 'Uploading to YouTube...'
                     : !isCompleted
                     ? `Upload requires COMPLETED status (current: ${project.status})`
+                    : isPublished
+                    ? 'Re-upload / post to YouTube'
+                    : isDraft
+                    ? 'Publish draft live or re-upload to YouTube'
                     : 'Upload directly to YouTube'
                 }
                 data-testid={`upload-project-${project.id}`}

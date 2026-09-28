@@ -43,7 +43,11 @@ export const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({
       setCustomTitle(project.rawInputText ? project.rawInputText.slice(0, 100) : '');
       setTitlePrefix('');
       setCustomTags('ai, generated, video');
-      setUploadType('DRAFT');
+      setUploadType(
+        project.youtubeStatus === 'DRAFT' || project.youtubeStatus === 'DRAFT_UPLOADED'
+          ? 'ACTUAL_POST'
+          : 'DRAFT'
+      );
       setErrorInfo(null);
     }
   }, [project, isOpen]);
@@ -51,8 +55,9 @@ export const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({
   if (!isOpen || !project) return null;
 
   const isCompleted = project.status === 'COMPLETED';
-  const isUploading = project.youtubeStatus === 'UPLOADING';
+  const isUploading = project.youtubeStatus === 'UPLOADING' || project.youtubeStatus === 'QUEUED';
   const isPublished = project.youtubeStatus === 'PUBLISHED';
+  const isDraftUploaded = project.youtubeStatus === 'DRAFT' || project.youtubeStatus === 'DRAFT_UPLOADED';
   const canUpload = isCompleted && !isUploading && !isLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,6 +164,39 @@ export const ProjectUploadModal: React.FC<ProjectUploadModalProps> = ({
                   <ExternalLink className='w-3 h-3' />
                 </a>
               )}
+            </div>
+          ) : isDraftUploaded ? (
+            <div className='p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 flex items-center justify-between gap-2 text-xs'>
+              <div className='flex items-center gap-2'>
+                <div className='w-2 h-2 rounded-full bg-blue-500' />
+                <span>
+                  Video is saved as a <strong>YouTube Studio Draft</strong>.
+                </span>
+              </div>
+              <div className='flex items-center gap-2'>
+                {project.youtubeStudioUrl && (
+                  <a
+                    href={project.youtubeStudioUrl}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-800 underline'
+                  >
+                    Open Studio
+                    <ExternalLink className='w-3 h-3' />
+                  </a>
+                )}
+                {project.youtubeUrl && (
+                  <a
+                    href={project.youtubeUrl}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-700 underline'
+                  >
+                    Watch
+                    <ExternalLink className='w-3 h-3' />
+                  </a>
+                )}
+              </div>
             </div>
           ) : null}
 

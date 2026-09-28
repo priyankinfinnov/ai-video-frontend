@@ -398,4 +398,139 @@ test.describe('Projects & Shorts Management E2E', () => {
     await expect(row).toBeVisible();
     await expect(row.getByText('Published')).toBeVisible();
   });
+
+  test('E2E-PROJ-09: Click row at /dashboard/projects?tab=shorts navigates to /dashboard/projects/:id?tab=shorts-clips', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const sourcePrompt = `RowClick Navigation Test ${timestamp}`;
+
+    // 1. Create a video project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(sourcePrompt);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // 2. Generate shorts from this project
+    const projectRow = page.locator('tr', { hasText: sourcePrompt });
+    await expect(projectRow).toBeVisible();
+    await projectRow.locator('a[title="Create Shorts from Project"]').click();
+
+    await expect(page).toHaveURL(/.*shorts-form\?videoProjectId=/);
+    await page.getByTestId('submit-shorts-button').click();
+
+    // 3. We are on Short Projects tab
+    await expect(page).toHaveURL(/.*tab=shorts/);
+    await expect(page.locator('h1')).toHaveText('Short Projects');
+
+    // 4. Click anywhere on the shorts project row (e.g. source project cell)
+    const shortsRow = page.locator('tr', { hasText: sourcePrompt });
+    await expect(shortsRow).toBeVisible();
+    await shortsRow.click();
+
+    // 5. Verify navigation to /dashboard/projects/:id?tab=shorts-clips
+    await expect(page).toHaveURL(/.*\/dashboard\/projects\/\d+\?tab=shorts-clips/);
+    await expect(page.getByText(/Project #\d+/i).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Short Clips' })).toBeVisible();
+  });
+
+  test('E2E-PROJ-10: In Project edit form, edit status to redo pipeline or change status', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const promptStatusTest = `Status Edit Project ${timestamp}`;
+
+    // 1. Create a project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(promptStatusTest);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // 2. Locate project and click Edit
+    const row = page.locator('tr', { hasText: promptStatusTest });
+    await expect(row).toBeVisible();
+    await row.locator('a[title="Edit Project"]').click();
+
+    // 3. Verify Edit Project page has Pipeline & Execution Status selector
+    await expect(page).toHaveURL(/.*project-form\?projectId=/);
+    await expect(page.locator('h1')).toHaveText('Edit Video Project');
+
+    const statusTrigger = page.getByTestId('select-status-trigger');
+    await expect(statusTrigger).toBeVisible();
+
+    // 4. Change status to FAILED (or another status)
+    await statusTrigger.click();
+    await page.getByRole('option', { name: /Failed/i }).click();
+
+    // 5. Submit update
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // 6. Verify row now shows Failed status
+    const updatedRow = page.locator('tr', { hasText: promptStatusTest });
+    await expect(updatedRow).toBeVisible();
+    await expect(updatedRow.getByText('Failed')).toBeVisible();
+
+    // 7. Edit again and reset status to Pending (to redo pipeline)
+    await updatedRow.locator('a[title="Edit Project"]').click();
+    await expect(page).toHaveURL(/.*project-form\?projectId=/);
+    const statusTriggerReset = page.getByTestId('select-status-trigger');
+    await statusTriggerReset.click();
+    await page.getByRole('option', { name: /Pending \/ Restart/i }).click();
+    await page.getByTestId('submit-project-button').click();
+
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+    const resetRow = page.locator('tr', { hasText: promptStatusTest });
+    await expect(resetRow.getByText('Pending')).toBeVisible();
+  });
+
+  test('E2E-PROJ-11: In Shorts table, edit status via modal to redo or update shorts pipeline', async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    const promptShortsEdit = `Shorts Status Test ${timestamp}`;
+
+    // 1. Create a video project
+    await page.getByTestId('nav-projects').click();
+    await page.getByTestId('add-project-button').click();
+    await page.locator('textarea#project-prompt').fill(promptShortsEdit);
+    await page.getByTestId('submit-project-button').click();
+    await expect(page).toHaveURL(/.*\/dashboard\/projects/);
+
+    // 2. Generate shorts
+    const projectRow = page.locator('tr', { hasText: promptShortsEdit });
+    await projectRow.locator('a[title="Create Shorts from Project"]').click();
+    await page.getByTestId('submit-shorts-button').click();
+    await expect(page).toHaveURL(/.*tab=shorts/);
+
+    // 3. Click Edit pencil button on the shorts row
+    const shortsRow = page.locator('tr', { hasText: promptShortsEdit });
+    await expect(shortsRow).toBeVisible();
+    const editBtn = shortsRow.locator('button[title="Edit Shorts Project Status"]');
+    await expect(editBtn).toBeVisible();
+    await editBtn.click();
+
+    // 4. Modal opens
+    const modalTrigger = page.getByTestId('shorts-status-select-trigger');
+    await expect(modalTrigger).toBeVisible();
+
+    // 5. Change status to FAILED
+    await modalTrigger.click();
+    await page.getByRole('option', { name: /Failed/i }).click();
+    await page.getByTestId('save-shorts-status-btn').click();
+
+    // 6. Verify row now reflects Failed
+    await expect(shortsRow.getByText('Failed')).toBeVisible();
+
+    // 7. Click Edit again and change back to Pending / Restart
+    await editBtn.click();
+    await modalTrigger.click();
+    await page.getByRole('option', { name: /Pending \/ Restart/i }).click();
+    await page.getByTestId('save-shorts-status-btn').click();
+
+    // Verify row now reflects Pending
+    await expect(shortsRow.getByText('Pending')).toBeVisible();
+  });
 });

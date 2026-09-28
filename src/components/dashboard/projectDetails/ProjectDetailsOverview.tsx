@@ -60,7 +60,9 @@ export const ProjectDetailsOverview = ({
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const isCompleted = project.status === 'COMPLETED';
-  const isUploading = project.youtubeStatus === 'UPLOADING';
+  const isUploading = project.youtubeStatus === 'UPLOADING' || project.youtubeStatus === 'QUEUED';
+  const isDraft = project.youtubeStatus === 'DRAFT' || project.youtubeStatus === 'DRAFT_UPLOADED';
+  const isPublished = project.youtubeStatus === 'PUBLISHED';
 
   const copyToClipboard = (text: string, type: 'prompt' | 'script') => {
     navigator.clipboard.writeText(text);
@@ -144,10 +146,10 @@ export const ProjectDetailsOverview = ({
               <>
                 <Youtube className='w-3.5 h-3.5 fill-current' />
                 <span>
-                  {project.youtubeStatus === 'PUBLISHED'
+                  {isPublished
                     ? 'Re-upload / Post'
-                    : project.youtubeStatus === 'DRAFT'
-                    ? 'Post Live'
+                    : isDraft
+                    ? 'Post Live to YouTube'
                     : 'Upload to YouTube'}
                 </span>
               </>
@@ -228,7 +230,7 @@ export const ProjectDetailsOverview = ({
                     </a>
                   )}
                 </div>
-              ) : project.youtubeStatus === 'DRAFT' ? (
+              ) : isDraft ? (
                 <div className='flex items-center gap-1.5'>
                   <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200'>
                     <span className='w-1.5 h-1.5 rounded-full bg-blue-500' />
@@ -246,7 +248,23 @@ export const ProjectDetailsOverview = ({
                       <ExternalLinkIcon className='w-3 h-3' />
                     </a>
                   )}
+                  {project.youtubeUrl && (
+                    <a
+                      href={project.youtubeUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-red-600 hover:text-red-700'
+                      title='Preview video on YouTube'
+                    >
+                      <ExternalLinkIcon className='w-3.5 h-3.5' />
+                    </a>
+                  )}
                 </div>
+              ) : project.youtubeStatus === 'QUEUED' ? (
+                <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200'>
+                  <span className='w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse' />
+                  Queued
+                </span>
               ) : project.youtubeStatus === 'UPLOADING' ? (
                 <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200'>
                   <Loader2 className='w-3 h-3 animate-spin text-blue-600' />
@@ -271,7 +289,11 @@ export const ProjectDetailsOverview = ({
               className='mt-2.5 text-[11px] font-semibold text-red-600 hover:text-red-700 flex items-center gap-1 hover:underline cursor-pointer'
             >
               <Youtube className='w-3 h-3' />
-              {project.youtubeStatus === 'PUBLISHED' ? 'Post Again →' : 'Upload to YouTube →'}
+              {isPublished
+                ? 'Post Again →'
+                : isDraft
+                ? 'Publish Live to YouTube →'
+                : 'Upload to YouTube →'}
             </button>
           )}
         </div>

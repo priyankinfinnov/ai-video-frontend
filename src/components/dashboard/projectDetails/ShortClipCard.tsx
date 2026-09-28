@@ -312,14 +312,22 @@ export const ShortClipCard: React.FC<ShortClipCardProps> = ({
           <div className='absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-end justify-between pointer-events-none'>
             {/* Social Publication Indicators */}
             <div className='flex items-center gap-1 pointer-events-auto'>
-              {clip.youtubeStatus === 'PUBLISHED' && (
+              {(clip.youtubeStatus === 'PUBLISHED' || clip.youtubeStatus === 'DRAFT' || clip.youtubeStatus === 'DRAFT_UPLOADED') && (
                 <a
                   href={clip.youtubeUrl || '#'}
                   target='_blank'
                   rel='noopener noreferrer'
                   onClick={(e) => e.stopPropagation()}
-                  className='p-1 rounded-full bg-red-600/90 text-white hover:bg-red-600 transition-colors shadow-xs'
-                  title='Published on YouTube Shorts'
+                  className={`p-1 rounded-full text-white transition-colors shadow-xs ${
+                    clip.youtubeStatus === 'PUBLISHED'
+                      ? 'bg-red-600/90 hover:bg-red-600'
+                      : 'bg-blue-600/90 hover:bg-blue-600'
+                  }`}
+                  title={
+                    clip.youtubeStatus === 'PUBLISHED'
+                      ? 'Published on YouTube Shorts'
+                      : 'Draft on YouTube Shorts'
+                  }
                 >
                   <Youtube className='w-3 h-3' />
                 </a>

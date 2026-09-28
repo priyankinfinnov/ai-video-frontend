@@ -34,6 +34,7 @@ import {
   ProjectLanguage,
   CreateProjectRequest,
   UpdateProjectRequest,
+  VIDEO_PROJECT_STATUS_OPTIONS,
 } from '@/types/project';
 
 interface ProjectFormProps {
@@ -84,6 +85,7 @@ export const ProjectForm = ({
   const [language, setLanguage] = useState<ProjectLanguage>('ENGLISH');
   const [isPublished, setIsPublished] = useState(false);
   const [publishedLink, setPublishedLink] = useState('');
+  const [status, setStatus] = useState<string>('PENDING');
 
   const { mutate: createProject, isLoading: isCreating } =
     useCreateProjectMutation(token);
@@ -95,6 +97,7 @@ export const ProjectForm = ({
   useEffect(() => {
     if (initialData) {
       setPersonaId(String(initialData.personaId));
+      setStatus(initialData.status || 'PENDING');
       setRawInputText(
         initialData.rawInputText
           ? isCloning
@@ -165,6 +168,7 @@ export const ProjectForm = ({
         ...(roughLengthInMins ? { roughLengthInMins } : {}),
         type,
         language,
+        status,
       };
 
       updateProject(updatePayload, {
@@ -514,6 +518,51 @@ export const ProjectForm = ({
             <span className='text-xs text-gray-400'>TTS synthesis language</span>
           </div>
         </div>
+
+        {/* Pipeline & Execution Status (Visible when editing) */}
+        {isEditing && (
+          <div className='border-t border-gray-100 pt-5 flex flex-col gap-3'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <Label htmlFor='project-status' className='font-medium text-gray-800 text-sm'>
+                  Pipeline & Execution Status
+                </Label>
+                <p className='text-xs text-gray-500 mt-0.5'>
+                  Modify the pipeline status to restart generation, retry a failed step, or mark as completed.
+                </p>
+              </div>
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  status === 'COMPLETED'
+                    ? 'bg-success-50 text-success-700 border border-success-200'
+                    : status === 'FAILED'
+                    ? 'bg-error-50 text-error-700 border border-error-200'
+                    : status === 'PENDING'
+                    ? 'bg-warning-50 text-warning-700 border border-warning-200'
+                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                }`}
+              >
+                {status}
+              </span>
+            </div>
+
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger id='project-status' className='w-full' data-testid='select-status-trigger'>
+                <SelectValue placeholder='Select status' />
+              </SelectTrigger>
+              <SelectContent className='max-h-72'>
+                {VIDEO_PROJECT_STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className='flex flex-col text-left py-0.5'>
+                      <span className='font-medium text-gray-900 text-xs'>{opt.label} ({opt.value})</span>
+                      <span className='text-[11px] text-gray-500'>{opt.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Publishing Status & Link Options */}
         <div className='border-t border-gray-100 pt-5 flex flex-col gap-4'>

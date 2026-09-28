@@ -270,7 +270,13 @@ export const ShortClipModal: React.FC<ShortClipModalProps> = ({
                     <div className='flex flex-col'>
                       <span className='text-xs font-medium text-gray-900'>YouTube Shorts</span>
                       <span className='text-[10px] text-gray-500'>
-                        {isYoutubeUploading ? 'Uploading...' : clip.youtubeStatus || 'Not Uploaded'}
+                        {isYoutubeUploading
+                          ? 'Uploading...'
+                          : clip.youtubeStatus === 'DRAFT_UPLOADED'
+                          ? 'Studio Draft'
+                          : clip.youtubeStatus === 'QUEUED'
+                          ? 'Queued'
+                          : clip.youtubeStatus || 'Not Uploaded'}
                       </span>
                     </div>
                   </div>
@@ -303,7 +309,11 @@ export const ShortClipModal: React.FC<ShortClipModalProps> = ({
                           }`}
                           title={!isCompleted ? 'Requires COMPLETED status' : 'Direct upload to YouTube'}
                         >
-                          {clip.youtubeStatus === 'PUBLISHED' ? 'Post Again' : 'Upload'}
+                          {clip.youtubeStatus === 'PUBLISHED'
+                            ? 'Post Again'
+                            : clip.youtubeStatus === 'DRAFT' || clip.youtubeStatus === 'DRAFT_UPLOADED'
+                            ? 'Post Live'
+                            : 'Upload'}
                         </button>
                       )
                     )}

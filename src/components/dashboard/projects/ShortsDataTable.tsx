@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { Trash2Icon, FilmIcon } from 'lucide-react';
+import { Trash2Icon, FilmIcon, PenIcon } from 'lucide-react';
 import { ShortsProject } from '@/types/project';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/common/DataTable';
 import { getCreatedDate } from '@/utils/utils';
+import { ShortsProjectEditModal } from './ShortsProjectEditModal';
 
 interface ShortsDataTableProps {
   data: ShortsProject[];
@@ -48,6 +50,10 @@ export const ShortsDataTable = ({
   isLoading = false,
   onDelete,
 }: ShortsDataTableProps) => {
+  const navigate = useNavigate();
+  const [selectedShortsForEdit, setSelectedShortsForEdit] =
+    useState<ShortsProject | null>(null);
+
   const columns = useMemo<ColumnDef<ShortsProject>[]>(
     () => [
       {
@@ -56,7 +62,21 @@ export const ShortsDataTable = ({
         cell: ({ row }) => {
           const shorts = row.original;
           return (
-            <div className='flex items-center gap-1.5'>
+            <div
+              className='flex items-center gap-1.5'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant='tertiary-gray'
+                size='sm'
+                onClick={() => setSelectedShortsForEdit(shorts)}
+                className='h-8 w-8 p-0 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg'
+                title='Edit Shorts Project Status'
+                data-testid={`edit-shorts-${shorts.id}`}
+              >
+                <PenIcon className='h-4 w-4' />
+              </Button>
+
               {onDelete && (
                 <Button
                   variant='tertiary-gray'
@@ -148,11 +168,24 @@ export const ShortsDataTable = ({
   );
 
   return (
-    <DataTable
-      columns={columns}
-      data={data}
-      isLoading={isLoading}
-      emptyMessage='No short-form video projects found. Generate shorts from any video project.'
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={isLoading}
+        emptyMessage='No short-form video projects found. Generate shorts from any video project.'
+        onRowClick={(shorts) => {
+          if (shorts.videoProjectId) {
+            navigate(`/dashboard/projects/${shorts.videoProjectId}?tab=shorts-clips`);
+          }
+        }}
+      />
+
+      <ShortsProjectEditModal
+        shortsProject={selectedShortsForEdit}
+        isOpen={!!selectedShortsForEdit}
+        onClose={() => setSelectedShortsForEdit(null)}
+      />
+    </>
   );
 };

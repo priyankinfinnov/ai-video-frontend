@@ -116,10 +116,11 @@ The project includes an automated end-to-end test suite powered by Playwright to
 
 1. **Testing Strategy Document**:
    - Detailed in [`PLAYWRIGHT_E2E_STRATEGY.md`](./PLAYWRIGHT_E2E_STRATEGY.md).
-2. **Dedicated Test User Policy**:
+2. **Dedicated Test User Policy & Critical Data Isolation**:
+   - **CRITICAL / NEVER USE USER 1 OR TEAM 1**: Never use User 1 or Team 1 for testing or development experiments under any circumstances. User 1 and Team 1 contain critical data of an actual user. All testing must strictly isolate test data from real user workspaces.
    - **Email**: `e2e-tester@example.com`
    - **Password**: `Password123!`
-   - Always use this verified user in tests to isolate test data from real user workspaces.
+   - Always use this verified user (User ID 27 / Team ID 27) in all tests and verification steps.
 3. **Test Specs Location**:
    - Tests reside in `e2e/` (e.g. `e2e/persona.spec.ts`, `e2e/auth.setup.ts`).
 4. **Running Tests**:

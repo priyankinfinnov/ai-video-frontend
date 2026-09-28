@@ -65,8 +65,8 @@ export const ClipUploadModal: React.FC<ClipUploadModalProps> = ({
   if (!isOpen || !clip) return null;
 
   const isCompleted = clip.status === 'COMPLETED';
-  const isYoutubeUploading = clip.youtubeStatus === 'UPLOADING';
-  const isInstagramUploading = clip.instagramStatus === 'UPLOADING';
+  const isYoutubeUploading = clip.youtubeStatus === 'UPLOADING' || clip.youtubeStatus === 'QUEUED';
+  const isInstagramUploading = clip.instagramStatus === 'UPLOADING' || clip.instagramStatus === 'QUEUED';
   const isSelectedUploading =
     platform === 'YOUTUBE' ? isYoutubeUploading : isInstagramUploading;
 
@@ -74,6 +74,8 @@ export const ClipUploadModal: React.FC<ClipUploadModalProps> = ({
   const isInstagramPublished = clip.instagramStatus === 'PUBLISHED';
   const isSelectedPublished =
     platform === 'YOUTUBE' ? isYoutubePublished : isInstagramPublished;
+
+  const isYoutubeDraft = clip.youtubeStatus === 'DRAFT' || clip.youtubeStatus === 'DRAFT_UPLOADED';
 
   const canUpload = isCompleted && !isSelectedUploading && !isLoading;
 
@@ -187,6 +189,24 @@ export const ClipUploadModal: React.FC<ClipUploadModalProps> = ({
                   target='_blank'
                   rel='noopener noreferrer'
                   className='inline-flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-800 underline'
+                >
+                  View
+                  <ExternalLink className='w-3 h-3' />
+                </a>
+              )}
+            </div>
+          ) : platform === 'YOUTUBE' && isYoutubeDraft ? (
+            <div className='p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 flex items-center justify-between gap-2 text-xs'>
+              <div className='flex items-center gap-2'>
+                <div className='w-2 h-2 rounded-full bg-blue-500' />
+                <span>Clip is saved as a <strong>YouTube Studio Draft</strong>.</span>
+              </div>
+              {clip.youtubeUrl && (
+                <a
+                  href={clip.youtubeUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-800 underline'
                 >
                   View
                   <ExternalLink className='w-3 h-3' />

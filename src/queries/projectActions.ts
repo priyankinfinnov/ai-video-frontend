@@ -6,6 +6,7 @@ import {
   CreateProjectRequest,
   UpdateProjectRequest,
   CreateShortsProjectRequest,
+  UpdateShortsProjectRequest,
   UploadProjectRequest,
   UploadShortsClipRequest,
 } from '@/types/project';
@@ -176,6 +177,62 @@ export const useCreateShortsProjectMutation = (token?: string | null) => {
         error.response?.data?.error ||
         error.message ||
         'Failed to create shorts project';
+      toast.error(message);
+    },
+  });
+};
+
+export const useUpdateShortsProjectMutation = (
+  id?: number | string,
+  token?: string | null
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['updateShortsProject', id],
+    mutationFn: async ({
+      id: targetId,
+      payload,
+    }: {
+      id?: number | string;
+      payload: UpdateShortsProjectRequest;
+    }) => {
+      const activeToken = token || getCookieValue(COOKIE_NAMES.TOKEN);
+      const teamId = extractTeamId(activeToken);
+      const projectIdToUpdate = targetId || id;
+
+      const body = {
+        ...payload,
+        ...(teamId ? { teamId } : {}),
+      };
+
+      const teamQuery = teamId ? `?teamId=${teamId}` : '';
+      const response = await apiFetch.patch(
+        `${API_BASE}/shorts-projects/${projectIdToUpdate}${teamQuery}`,
+        body
+      );
+      return response.data;
+    },
+    onSuccess: async (_, variables) => {
+      const updatedId = variables.id || id;
+      await queryClient.invalidateQueries(['shorts-projects']);
+      await queryClient.refetchQueries(['shorts-projects']);
+      if (updatedId) {
+        await queryClient.invalidateQueries(['shorts-project', updatedId]);
+      }
+      await queryClient.invalidateQueries(['projects']);
+      toast.success('Shorts project status updated successfully!');
+    },
+    onError: (err: unknown) => {
+      const error = err as {
+        response?: { data?: { message?: string; error?: string } };
+        message?: string;
+      };
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to update shorts project';
       toast.error(message);
     },
   });

@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
-import { ScissorsIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { ScissorsIcon, PlusIcon, Trash2Icon, PenIcon } from 'lucide-react';
 import { ShortsProject } from '@/types/project';
 import { DataTable, DataTableFilterBar, DataTablePagination } from '@/components/common';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { useDeleteShortsProjectMutation } from '@/queries/projectActions';
 import { useAppSelector } from '@/store/store';
 import useDataTableFilters from '@/hooks/useDataTableFilters';
 import { getCreatedDate } from '@/utils/utils';
+import { ShortsProjectEditModal } from '../projects/ShortsProjectEditModal';
 
 interface ShortsProjectsTabProps {
   projectId: number;
@@ -47,8 +48,11 @@ const getShortsStatusBadge = (status: string) => {
 };
 
 export const ShortsProjectsTab = ({ projectId }: ShortsProjectsTabProps) => {
+  const navigate = useNavigate();
   const token = useAppSelector((store) => store.auth.token);
   const { mutate: deleteShortsProject } = useDeleteShortsProjectMutation();
+  const [selectedShortsForEdit, setSelectedShortsForEdit] =
+    useState<ShortsProject | null>(null);
 
   const {
     page,
@@ -90,7 +94,21 @@ export const ShortsProjectsTab = ({ projectId }: ShortsProjectsTabProps) => {
         cell: ({ row }) => {
           const s = row.original;
           return (
-            <div className='flex items-center gap-1'>
+            <div
+              className='flex items-center gap-1'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant='tertiary-gray'
+                size='sm'
+                onClick={() => setSelectedShortsForEdit(s)}
+                className='h-8 w-8 p-0 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg'
+                title='Edit Shorts Project Status'
+                data-testid={`edit-shorts-tab-${s.id}`}
+              >
+                <PenIcon className='h-4 w-4' />
+              </Button>
+
               <Button
                 variant='tertiary-gray'
                 size='sm'
@@ -207,6 +225,9 @@ export const ShortsProjectsTab = ({ projectId }: ShortsProjectsTabProps) => {
         data={filteredData}
         isLoading={isLoading}
         emptyMessage='No shorts projects created for this video project yet. Click "Convert to Shorts" to carve viral clips.'
+        onRowClick={() => {
+          navigate(`/dashboard/projects/${projectId}?tab=shorts-clips`);
+        }}
       />
 
       {pagination && (
@@ -216,6 +237,12 @@ export const ShortsProjectsTab = ({ projectId }: ShortsProjectsTabProps) => {
           onLimitChange={setLimit}
         />
       )}
+
+      <ShortsProjectEditModal
+        shortsProject={selectedShortsForEdit}
+        isOpen={!!selectedShortsForEdit}
+        onClose={() => setSelectedShortsForEdit(null)}
+      />
     </div>
   );
 };

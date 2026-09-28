@@ -203,10 +203,10 @@ export const ProjectDetailsPage = () => {
         <div className='flex items-center gap-2'>
           <Button
             onClick={() => setIsUploadModalOpen(true)}
-            disabled={project.status !== 'COMPLETED' || project.youtubeStatus === 'UPLOADING'}
+            disabled={project.status !== 'COMPLETED' || project.youtubeStatus === 'UPLOADING' || project.youtubeStatus === 'QUEUED'}
             size='sm'
             className={`text-xs flex items-center gap-1.5 shadow-xs ${
-              project.youtubeStatus === 'UPLOADING'
+              project.youtubeStatus === 'UPLOADING' || project.youtubeStatus === 'QUEUED'
                 ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-wait'
                 : project.status === 'COMPLETED'
                 ? 'bg-red-600 hover:bg-red-700 text-white'
@@ -215,6 +215,8 @@ export const ProjectDetailsPage = () => {
             title={
               project.youtubeStatus === 'UPLOADING'
                 ? 'Uploading to YouTube...'
+                : project.youtubeStatus === 'QUEUED'
+                ? 'Queued for upload...'
                 : project.status !== 'COMPLETED'
                 ? `Upload requires COMPLETED status (current: ${project.status})`
                 : 'Upload 1440p Master Video to YouTube'
@@ -226,13 +228,18 @@ export const ProjectDetailsPage = () => {
                 <Loader2 className='w-3.5 h-3.5 animate-spin' />
                 <span>Uploading...</span>
               </>
+            ) : project.youtubeStatus === 'QUEUED' ? (
+              <>
+                <Loader2 className='w-3.5 h-3.5 animate-pulse' />
+                <span>Queued</span>
+              </>
             ) : (
               <>
                 <YoutubeIcon className='w-3.5 h-3.5 fill-current' />
                 <span>
                   {project.youtubeStatus === 'PUBLISHED'
                     ? 'Re-upload'
-                    : project.youtubeStatus === 'DRAFT'
+                    : project.youtubeStatus === 'DRAFT' || project.youtubeStatus === 'DRAFT_UPLOADED'
                     ? 'Post Live'
                     : 'Upload to YouTube'}
                 </span>
@@ -311,14 +318,22 @@ export const ProjectDetailsPage = () => {
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                   project.youtubeStatus === 'PUBLISHED'
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : project.youtubeStatus === 'DRAFT'
+                    : project.youtubeStatus === 'DRAFT' || project.youtubeStatus === 'DRAFT_UPLOADED'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : project.youtubeStatus === 'QUEUED'
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : project.youtubeStatus === 'UPLOADING'
                     ? 'bg-blue-50 text-blue-700 border border-blue-200'
                     : project.youtubeStatus === 'FAILED'
                     ? 'bg-red-50 text-red-700 border border-red-200'
                     : 'bg-gray-100 text-gray-700'
                 }`}
               >
-                {project.youtubeStatus}
+                {project.youtubeStatus === 'DRAFT_UPLOADED'
+                  ? 'Studio Draft'
+                  : project.youtubeStatus === 'DRAFT'
+                  ? 'Draft'
+                  : project.youtubeStatus}
               </span>
               {project.youtubeStudioUrl && (
                 <a
