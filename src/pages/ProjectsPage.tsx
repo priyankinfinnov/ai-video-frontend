@@ -145,7 +145,7 @@ export const ProjectsPage = ({ defaultTab }: ProjectsPageProps) => {
   };
 
   return (
-    <main className='flex flex-col gap-6 px-4 md:px-8 py-8 max-w-7xl mx-auto w-full'>
+    <main className='flex flex-col gap-6 px-4 md:px-8 py-8 w-full'>
       {/* Header with Title and Tabs on Right Side */}
       <header className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
         <div>

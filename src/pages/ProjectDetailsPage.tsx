@@ -145,7 +145,7 @@ export const ProjectDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <div className='p-6 space-y-6 max-w-7xl mx-auto'>
+      <div className='p-6 space-y-6 w-full'>
         <div className='flex items-center gap-3'>
           <div className='h-8 w-24 bg-gray-200 animate-pulse rounded-md' />
           <div className='h-8 w-48 bg-gray-200 animate-pulse rounded-md' />
@@ -183,7 +183,7 @@ export const ProjectDetailsPage = () => {
   };
 
   return (
-    <div className='p-6 space-y-6 max-w-7xl mx-auto'>
+    <div className='p-6 space-y-6 w-full'>
       {/* Top Breadcrumb & Return Action */}
       <div className='flex items-center justify-between gap-4'>
         <div className='flex items-center gap-2 text-xs text-gray-500'>
