@@ -38,34 +38,28 @@ Always enforce and follow the authentication flow across all routes and API requ
 
 ---
 
-## 3. Core Features & Persona CRUD Architecture
+## 3. Core Features & Module Architecture
 
-The application uses an OpenAPI-aligned **Persona Management** system with generic, highly reusable data-table, search/filtering, and pagination primitives:
+The application uses an OpenAPI-aligned architecture with generic, highly reusable data-table, search/filtering, and pagination primitives across all core modules:
 
-- **Dashboard Landing & Listing**:
-  - Route: `/dashboard` and `/dashboard/personas` (`src/pages/PersonaPage.tsx`)
-  - Component: `PersonaDataTable` (`src/components/dashboard/persona/PersonaDataTable.tsx`)
-  - Generic Foundation: `DataTable`, `DataTablePagination`, and `DataTableFilterBar` in `src/components/common/`
-  - Query: `useGetPersonasQuery` (`src/queries/personaQueries.ts`) -> `GET /api/personas?page=X&limit=Y`
-  - Left-Aligned Action: Every row has an edit pencil button on the far left that links to `/dashboard/persona-form?personaId=<id>`.
-- **Create Persona**:
-  - Route: `/dashboard/persona-form` (`src/pages/PersonaFormPage.tsx`)
-  - Form: `PersonaForm` (`src/components/dashboard/personaForm/index.tsx`)
-  - Mutation: `useCreatePersonaMutation` (`src/queries/personaActions.ts`) -> `POST /api/personas`
-  - Fields: `name` (required), `topics` (required string array), and optional multimodal DNA paths (`characterSheetPath`, `headPicturePath`, `referenceAudioPath`, `writingDnaPath`, `visualDnaPath`, `scriptPromptPath`, `videoPromptPath`, `scriptJudgePath`). Empty strings are omitted so backend validation passes cleanly.
-- **Clone Persona**:
-  - Route: `/dashboard/persona-form?cloneId=<ID>` (`src/pages/PersonaFormPage.tsx`)
-  - Behavior: Clicking the clone copy icon on the row opens the Persona form pre-filled with the source persona's details (name suffixed with `(Copy)`, topics, asset paths) without making any mutations to the database. The persona is only saved when the user clicks "Create Persona" (`POST /api/personas`).
-- **Update / Edit Persona**:
-  - Route: `/dashboard/persona-form?personaId=<ID>` (`src/pages/PersonaFormPage.tsx`)
-  - Single Item Query: `useGetPersonaQuery` (`src/queries/personaQueries.ts`) -> `GET /api/personas/:id`
-  - Mutation: `useUpdatePersonaMutation` (`src/queries/personaActions.ts`) -> `PATCH /api/personas/:id`
-- **Delete Persona**:
-  - Mutation: `useDeletePersonaMutation` (`src/queries/personaActions.ts`) -> `DELETE /api/personas/:id`
+- **Persona Management & Detailed View**:
+  - Landing / Listing: `/dashboard` and `/dashboard/personas` (`src/pages/PersonaPage.tsx`) via `PersonaDataTable`.
+  - Persona Detailed View: `/dashboard/personas/:id` (`src/pages/PersonaDetailsPage.tsx`) with multi-tab workspace: Character Sheet, Script Files, Script Judge, Visual Files, Automations, and Integrations tabs.
+  - Create / Edit / Clone Form: `/dashboard/persona-form` (`src/pages/PersonaFormPage.tsx`) supporting Create (`POST`), Edit (`PATCH`), and Clone (`?cloneId=...`) flows.
+- **Project & Shorts Pipeline**:
+  - Listing & Details: `/dashboard/projects` (`src/pages/ProjectsPage.tsx`) and `/dashboard/projects/:id` (`src/pages/ProjectDetailsPage.tsx`).
+  - Project Detailed Workspace: Multi-tab layout featuring Overview, Script Iteration Logs, Shorts Clips, Shorts Projects, Video Parts/Assets, and Video Player tabs.
+  - Project & Shorts Form Modals: `ProjectForm` (supporting `generatedScript`, `rawInputText`, and `publishedLink`), `ShortsProjectEditModal`, and direct upload modals (`ProjectUploadModal`, `ClipUploadModal`).
+- **Automations & Social Integrations**:
+  - Automations Dashboard: `/dashboard/automations` (`src/pages/AutomationsPage.tsx`) for background automation pipelines, trigger parameters, and status tracking.
+  - Social Integrations: Social channel connection management (`socialAccountQueries` & `socialAccountActions`) integrated into persona detail workflows.
+- **Settings & Team Management**:
+  - Settings Route: `/dashboard/settings` (`src/pages/SettingsPage.tsx`).
+  - User & Team Settings: `UserSettings` (profile metadata display) and `TeamSettings` (team info, member list, role updates, member invitations, and removals via `teamQueries` & `teamActions`).
 - **Cache Invalidation & Feedback**:
-  - Mutations automatically invalidate `['personas']` in TanStack Query and display instant toast notifications via `react-hot-toast`.
+  - All TanStack Query mutations automatically invalidate entity cache keys (`['personas']`, `['projects']`, `['automations']`, `['team']`) and trigger toast notifications via `react-hot-toast`.
 
-When creating new entity features (Projects, Shorts, Teams), reuse the `DataTable`, `DataTablePagination`, `DataTableFilterBar`, and `useDataTableFilters` hooks from `src/components/common/` and `src/hooks/useDataTableFilters.ts`.
+When creating new entity features, reuse `DataTable`, `DataTablePagination`, `DataTableFilterBar`, and `useDataTableFilters` hooks from `src/components/common/` and `src/hooks/useDataTableFilters.ts`.
 
 ---
 
@@ -89,6 +83,10 @@ All UI development must strictly adhere to the project's design system:
    - **Neutrals**: Tailwind gray scale (`--gray-25` through `--gray-900`).
    - **Status Colors**: Error (`--error-500: #f04438`), Warning (`--warning-500`), Success (`--success-500`).
    - Do **not** use arbitrary hex codes or disconnected color palettes in inline styles or ad-hoc classes.
+
+4. **Table Layout & Pagination Standards**:
+   - Data tables default to **50 items per page** (`useDataTableFilters` hook & `DataTablePagination`).
+   - All table views utilize full container width (`w-full`) for high data density and visual clarity.
 
 ---
 
@@ -122,7 +120,14 @@ The project includes an automated end-to-end test suite powered by Playwright to
    - **Password**: `Password123!`
    - Always use this verified user (User ID 27 / Team ID 27) in all tests and verification steps.
 3. **Test Specs Location**:
-   - Tests reside in `e2e/` (e.g. `e2e/persona.spec.ts`, `e2e/auth.setup.ts`).
+   - Tests reside in `e2e/`:
+     - `auth.setup.ts`: Authentication state setup
+     - `persona.spec.ts`: Persona CRUD & filtering specs
+     - `projects.spec.ts`: Project details, workspace tabs & status update specs
+     - `direct-uploads.spec.ts`: Direct project and clip modal upload specs
+     - `shorts-clips.spec.ts`: Shorts clip detail cards and modal specs
+     - `automations-and-socials.spec.ts`: Automation pipelines and social integration specs
+     - `settings.spec.ts`: User profile and team management settings specs
 4. **Running Tests**:
    - `npm run test:e2e` or `npx playwright test`
 
@@ -170,25 +175,30 @@ AI-vid-frontend/
 ├── .codegraph/               # CodeGraph SQLite index and metadata
 ├── e2e/                      # Playwright E2E test specs and setup
 │   ├── auth.setup.ts         # Test authentication helper
-│   └── persona.spec.ts       # Persona CRUD & table interaction tests
+│   ├── automations-and-socials.spec.ts # Automations & integrations specs
+│   ├── direct-uploads.spec.ts# Quick project/clip upload specs
+│   ├── persona.spec.ts       # Persona CRUD & table interaction specs
+│   ├── projects.spec.ts      # Projects & shorts workspace specs
+│   ├── settings.spec.ts      # User profile & team settings specs
+│   └── shorts-clips.spec.ts  # Shorts clips tab & modal specs
 ├── src/
 │   ├── assets/               # Static assets, SVGs, and images
 │   ├── components/
 │   │   ├── auth/             # Login, Signup, and Auth form components
 │   │   ├── common/           # Generic DataTable, Pagination, FilterBar
-│   │   ├── dashboard/        # Dashboard modules (persona, personaForm)
+│   │   ├── dashboard/        # Dashboard modules (persona, personaDetails, projectDetails, automations, settings, shortsForm)
 │   │   ├── layout/           # Dashboard layout, Navbar, Sidebar
 │   │   ├── ui/               # Reusable UI primitives (Button, Input, Select, Table...)
 │   │   └── ProtectedRoutes.tsx # Route guard for authenticated views
 │   ├── constants/            # Regex patterns, cookie keys, and API paths
 │   ├── hooks/                # Custom React hooks (useDataTableFilters, etc.)
 │   ├── lib/                  # Library helpers (clsx, tailwind-merge)
-│   ├── pages/                # Top-level page views (PersonaPage, PersonaFormPage, etc.)
-│   ├── queries/              # TanStack Query hooks and mutation actions
+│   ├── pages/                # Top-level page views (PersonaPage, ProjectDetailsPage, SettingsPage, AutomationsPage, etc.)
+│   ├── queries/              # TanStack Query hooks (persona, project, automation, socialAccount, team)
 │   ├── services/             # Axios instances and API request functions
 │   ├── store/                # Redux store and slices (authSlice)
 │   ├── styles/               # global.css and Tailwind design tokens
-│   ├── types/                # TypeScript models (persona.ts, common.ts, userType.ts)
+│   ├── types/                # TypeScript models (persona.ts, project.ts, automation.ts, socialAccount.ts, team.ts)
 │   ├── utils/                # Helper utilities and cookie handling
 │   ├── App.tsx               # Root routing and query provider setup
 │   └── main.tsx              # Application entry point

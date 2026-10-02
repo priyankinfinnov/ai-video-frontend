@@ -45,8 +45,13 @@ To prevent pollution or corruption of existing user records or project data, all
 AI-vid-frontend/
 ├── playwright.config.ts        # Playwright test runner configuration
 ├── e2e/
-│   ├── auth.setup.ts           # Shared authentication helpers / login helper
-│   └── persona.spec.ts         # Persona CRUD, table, filtering & pagination specs
+│   ├── auth.setup.ts           # Shared authentication state & login helper
+│   ├── automations-and-socials.spec.ts # Automations table, modal & social account specs
+│   ├── direct-uploads.spec.ts  # Quick project and short clip upload modal specs
+│   ├── persona.spec.ts         # Persona CRUD, detailed tabs, table & filtering specs
+│   ├── projects.spec.ts        # Project details tabs, status editing & form specs
+│   ├── settings.spec.ts        # User profile & team settings management specs
+│   └── shorts-clips.spec.ts    # Shorts clips cards, view links & modal interaction specs
 └── PLAYWRIGHT_E2E_STRATEGY.md  # Strategy and guidelines document
 ```
 
@@ -71,6 +76,11 @@ AI-vid-frontend/
 | **E2E-05** | Pagination Controls | Creates multiple records (or inspects existing), switches rows per page, toggles next/prev pages, verifies entry counts (`Showing X to Y of Z`). |
 | **E2E-06** | Cleanup / Deletion | Clicks delete icon on created test personas, handles browser confirmation dialog, verifies row is removed from table. |
 | **E2E-07** | Clone Persona Workflow | Clicks clone icon on row, verifies form opens with `?cloneId=...` and pre-filled data without creating in DB yet. Changes name, submits, and verifies new cloned record appears. |
+| **E2E-08** | Projects & Details Workspace | Navigates to `/dashboard/projects`, opens project detailed view (`/dashboard/projects/:id`), switches across overview, script iteration logs, shorts clips, and video player tabs. Verifies script and published link updates. |
+| **E2E-09** | Direct Upload Modals | Triggers `ProjectUploadModal` and `ClipUploadModal`, fills metadata/file paths, verifies upload submission and list refresh. |
+| **E2E-10** | Shorts Clips & Status Editing | Opens shorts clips view, opens `ShortClipModal` or `ShortsProjectEditModal`, edits status, verifies status badge update. |
+| **E2E-11** | Automations & Social Integrations | Navigates to `/dashboard/automations`, creates/edits automation trigger configurations, verifies persona social integration tab connections. |
+| **E2E-12** | Settings & Team Management | Navigates to `/dashboard/settings`, verifies user profile info, inspects team details, tests member role updates and invitation dialogs. |
 
 ---
 
