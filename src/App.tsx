@@ -17,6 +17,7 @@ import {
   ProjectDetailsPage,
   ShortsFormPage,
   AutomationsPage,
+  SettingsPage,
 } from './pages';
 
 
@@ -109,6 +110,7 @@ const App = () => {
           <Route path='shorts' element={<ProjectsPage defaultTab='shorts' />} />
           <Route path='project-form' element={<ProjectFormPage />} />
           <Route path='shorts-form' element={<ShortsFormPage />} />
+          <Route path='settings' element={<SettingsPage />} />
           <Route path='*' element={<ErrorPage />} />
         </Route>
 

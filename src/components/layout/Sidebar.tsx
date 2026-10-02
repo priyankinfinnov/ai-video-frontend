@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { UsersIcon, FilmIcon, ScissorsIcon, LogOutIcon, ZapIcon } from 'lucide-react';
+import { UsersIcon, FilmIcon, ScissorsIcon, LogOutIcon, ZapIcon, SettingsIcon } from 'lucide-react';
 import { LogoMark } from '@/assets/svgs';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { removeUserCredentials } from '@/store/auth/authSlice';
@@ -11,16 +11,18 @@ const Sidebar = () => {
   const dispatch = useAppDispatch();
   const userInfo = useAppSelector((store) => store.auth.userInfo);
 
-  const isAutomationsActive = location.pathname.startsWith(
-    '/dashboard/automations'
-  );
+  const isSettingsActive = location.pathname.startsWith('/dashboard/settings');
+
+  const isAutomationsActive =
+    location.pathname.startsWith('/dashboard/automations') && !isSettingsActive;
 
   const isPersonaActive =
     (location.pathname === '/dashboard' ||
       location.pathname.startsWith('/dashboard/persona')) &&
     !location.pathname.startsWith('/dashboard/project') &&
     !location.pathname.startsWith('/dashboard/short') &&
-    !isAutomationsActive;
+    !isAutomationsActive &&
+    !isSettingsActive;
 
   const isShortsActive =
     location.pathname.startsWith('/dashboard/shorts') ||
@@ -113,6 +115,20 @@ const Sidebar = () => {
             <ScissorsIcon className='w-5 h-5' />
             <span className='text-[10px] font-medium tracking-tight'>Shorts</span>
           </Link>
+
+          <Link
+            to='/dashboard/settings'
+            className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all ${
+              isSettingsActive
+                ? 'bg-primary-600 text-white shadow-sm'
+                : 'text-primary-200 hover:text-white hover:bg-primary-600/50'
+            }`}
+            title='Settings'
+            data-testid='nav-settings'
+          >
+            <SettingsIcon className='w-5 h-5' />
+            <span className='text-[10px] font-medium tracking-tight'>Settings</span>
+          </Link>
         </nav>
       </div>
 
@@ -128,12 +144,14 @@ const Sidebar = () => {
           <LogOutIcon className='w-5 h-5' />
         </button>
 
-        <div
-          className='w-9 h-9 rounded-full bg-primary-800 text-white font-medium text-xs flex items-center justify-center ring-2 ring-primary-500/40'
-          title={userInfo?.email || 'User Account'}
+        <Link
+          to='/dashboard/settings?tab=user'
+          className='w-9 h-9 rounded-full bg-primary-800 text-white font-medium text-xs flex items-center justify-center ring-2 ring-primary-500/40 hover:ring-white transition-all cursor-pointer'
+          title={userInfo?.email || 'User Account Settings'}
+          data-testid='user-profile-avatar'
         >
           {userInitial}
-        </div>
+        </Link>
       </div>
     </aside>
   );

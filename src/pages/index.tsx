@@ -14,6 +14,7 @@ import ShortsFormPage from './ShortsFormPage';
 import Signup from './Signup';
 import VerifyEmailPage from './VerifyEmailPage';
 import AutomationsPage from './AutomationsPage';
+import SettingsPage from './SettingsPage';
 
 export {
   DashboardHome,
@@ -32,5 +33,7 @@ export {
   PricingPage,
   VerifyEmailPage,
   AutomationsPage,
+  SettingsPage,
 };
+
 
