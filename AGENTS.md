@@ -7,7 +7,10 @@ Welcome to the AI Video Frontend codebase. This document outlines the project ar
 ## 1. Project Overview & Architecture
 
 - **Project Type**: Base React front-end application built with Vite, TypeScript, Tailwind CSS, Redux Toolkit, and TanStack React Query.
-- **Backend Service**: Connects to the backend server running locally on **`http://localhost:6001`** (configured via `src/services/index.ts` and `src/constants/constants.ts`).
+- **Backend Service & Test Environment Isolation**:
+  - **Development Mode**: Connects to backend API on **`http://localhost:6001`** (database `ai_video_generator`).
+  - **Test Mode (`NODE_ENV=test`)**: Connects to isolated backend test API on **`http://localhost:6011`** (database `ai_video_generator_test`, test worker port 6012, isolated test storage `./storage/test_assets` and `./storage/test_exports`).
+  - **Dynamic Configuration**: Backend URL is resolved dynamically via `getApiBaseUrl()` reading `NEXT_PUBLIC_API_URL` (configured in `.env`, `.env.test`, `.env.test.local`).
 - **Frontend Dev Server**: Runs on port **`http://localhost:6003`** (configured in `vite.config.ts`).
 - **Backend Swagger API Spec**: **`http://localhost:6001/api/docs.json`** (OpenAPI 3.0.3 specification for debugging, payload contracts, and endpoint verification).
 - **Core Purpose**: Provides a clean, modern dashboard interface for AI creator persona workflows, video creation pipelines, template management, and team-based actions.
@@ -108,28 +111,55 @@ All UI development must strictly adhere to the project's design system:
 
 ---
 
-## 6. End-to-End Testing (Playwright)
+## 6. End-to-End Testing & Test Mode Environment Instructions
 
-The project includes an automated end-to-end test suite powered by Playwright to verify full user journeys:
+The project includes an automated end-to-end test suite powered by Playwright with strict environment & database isolation:
 
-1. **Testing Strategy Document**:
-   - Detailed in [`PLAYWRIGHT_E2E_STRATEGY.md`](./PLAYWRIGHT_E2E_STRATEGY.md).
-2. **Dedicated Test User Policy & Critical Data Isolation**:
+1. **Test Environment & DB Isolation Rules**:
+   - **Backend Test API URL**: `http://localhost:6011`
+   - **Backend Test Database**: `ai_video_generator_test` (PostgreSQL)
+   - **Test Storage Isolation**: `./storage/test_assets` and `./storage/test_exports`
+   - **Safety Assertion**: Backend immediately aborts if `NODE_ENV=test` ever points to port `6001` or the `ai_video_generator` dev database.
+   - **No Hardcoded URLs**: Never hardcode `http://localhost:6001` in frontend test files or component defaults. Use dynamic env helpers (`getApiBaseUrl()`, `resolveAssetUrl()`, or `process.env.NEXT_PUBLIC_API_URL`).
+
+2. **Environment Configuration (`.env.test`)**:
+   - Set in `.env.test` (and `.env.test.local`):
+     ```env
+     NODE_ENV=test
+     NEXT_PUBLIC_API_URL="http://localhost:6011"
+     PORT=6003
+     ```
+
+3. **Playwright Configuration (`playwright.config.ts`)**:
+   - `use.baseURL`: `http://localhost:6003`
+   - `NEXT_PUBLIC_API_URL`: Set to `http://localhost:6011` during Playwright execution.
+   - `webServer` block automatically verifies:
+     - Frontend Vite server on port 6003 (`http://localhost:6003`).
+     - Backend REST API server in test mode on port 6011 (`http://localhost:6011/health`).
+   - `globalSetup`: Pre-test preflight hook (`e2e/global-setup.ts`) automatically executes backend test DB synchronization prior to running test suites.
+
+4. **Dedicated Test User Policy & Critical Data Isolation**:
    - **CRITICAL / NEVER USE USER 1 OR TEAM 1**: Never use User 1 or Team 1 for testing or development experiments under any circumstances. User 1 and Team 1 contain critical data of an actual user. All testing must strictly isolate test data from real user workspaces.
    - **Email**: `e2e-tester@example.com`
    - **Password**: `Password123!`
-   - Always use this verified user (User ID 27 / Team ID 27) in all tests and verification steps.
-3. **Test Specs Location**:
+   - Always use this verified user (User ID 27 / Team ID 27) in all test setups (`e2e/auth.setup.ts`) and verification steps.
+
+5. **Test Specs Location**:
    - Tests reside in `e2e/`:
-     - `auth.setup.ts`: Authentication state setup
+     - `global-setup.ts`: Preflight database synchronization hook
+     - `auth.setup.ts`: Test authentication helper targeting port 6011
      - `persona.spec.ts`: Persona CRUD & filtering specs
      - `projects.spec.ts`: Project details, workspace tabs & status update specs
      - `direct-uploads.spec.ts`: Direct project and clip modal upload specs
      - `shorts-clips.spec.ts`: Shorts clip detail cards and modal specs
      - `automations-and-socials.spec.ts`: Automation pipelines and social integration specs
      - `settings.spec.ts`: User profile and team management settings specs
-4. **Running Tests**:
-   - `npm run test:e2e` or `npx playwright test`
+
+6. **Running E2E Test Commands**:
+   - Run tests in test mode: `npm run test:e2e` (`cross-env NODE_ENV=test playwright test`)
+   - Run tests in UI mode: `npm run test:e2e:ui` (`cross-env NODE_ENV=test playwright test --ui`)
+   - Debug tests: `npm run test:e2e:debug` (`cross-env NODE_ENV=test playwright test --debug`)
+   - Strategy Document: Detailed in [`PLAYWRIGHT_E2E_STRATEGY.md`](./PLAYWRIGHT_E2E_STRATEGY.md).
 
 ---
 
@@ -173,8 +203,11 @@ This project uses **CodeGraph** (`.codegraph/`) to maintain an indexed knowledge
 ```
 AI-vid-frontend/
 ├── .codegraph/               # CodeGraph SQLite index and metadata
+├── .env                      # Default dev environment (NEXT_PUBLIC_API_URL=http://localhost:6001)
+├── .env.test                 # Test mode environment (NODE_ENV=test, NEXT_PUBLIC_API_URL=http://localhost:6011)
 ├── e2e/                      # Playwright E2E test specs and setup
-│   ├── auth.setup.ts         # Test authentication helper
+│   ├── auth.setup.ts         # Test authentication helper (dynamic test token fetching)
+│   ├── global-setup.ts       # Preflight test DB setup hook
 │   ├── automations-and-socials.spec.ts # Automations & integrations specs
 │   ├── direct-uploads.spec.ts# Quick project/clip upload specs
 │   ├── persona.spec.ts       # Persona CRUD & table interaction specs
@@ -195,7 +228,7 @@ AI-vid-frontend/
 │   ├── lib/                  # Library helpers (clsx, tailwind-merge)
 │   ├── pages/                # Top-level page views (PersonaPage, ProjectDetailsPage, SettingsPage, AutomationsPage, etc.)
 │   ├── queries/              # TanStack Query hooks (persona, project, automation, socialAccount, team)
-│   ├── services/             # Axios instances and API request functions
+│   ├── services/             # Axios instances, getApiBaseUrl(), and API request functions
 │   ├── store/                # Redux store and slices (authSlice)
 │   ├── styles/               # global.css and Tailwind design tokens
 │   ├── types/                # TypeScript models (persona.ts, project.ts, automation.ts, socialAccount.ts, team.ts)
@@ -207,15 +240,17 @@ AI-vid-frontend/
 ├── components.json           # Shadcn UI configuration
 ├── tailwind.config.js        # Tailwind CSS configuration with design system tokens
 ├── tsconfig.json             # TypeScript configuration
-└── vite.config.ts            # Vite build configuration (Port 6003)
+└── vite.config.ts            # Vite build configuration (Port 6003, envPrefix & defines)
 ```
 
 ---
 
 ## 9. Common Commands
 
-- **Development Server**: `npm run dev` / `yarn dev` (runs Vite dev server on port 6003)
+- **Development Server**: `npm run dev` / `yarn dev` (runs Vite dev server on port 6003 targeting dev API `http://localhost:6001`)
 - **Type Check & Build**: `npm run build`
 - **Linting**: `npm run lint`
-- **E2E Testing**: `npm run test:e2e` (runs Playwright tests)
+- **E2E Testing (Test Mode)**: `npm run test:e2e` (runs Playwright tests in `NODE_ENV=test` targeting test API `http://localhost:6011`)
+- **E2E Testing (UI Mode)**: `npm run test:e2e:ui` (runs Playwright test runner UI in test mode)
+- **E2E Testing (Debug Mode)**: `npm run test:e2e:debug` (runs Playwright test debugger in test mode)
 - **CodeGraph Synchronization**: `codegraph sync`
