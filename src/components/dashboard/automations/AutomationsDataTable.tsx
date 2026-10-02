@@ -9,6 +9,7 @@ import {
   Pen,
   Trash2,
   Eye,
+  Copy,
   CheckCircle2,
   AlertCircle,
   Clock,
@@ -28,6 +29,7 @@ interface AutomationsDataTableProps {
   data: Automation[];
   isLoading?: boolean;
   onEdit?: (automation: Automation) => void;
+  onClone?: (automation: Automation) => void;
   onDelete?: (id: number) => void;
   onViewDetails?: (automation: Automation) => void;
   hidePersonaColumn?: boolean; // When rendered inside persona automations tab
@@ -74,6 +76,7 @@ export const AutomationsDataTable = ({
   data,
   isLoading = false,
   onEdit,
+  onClone,
   onDelete,
   onViewDetails,
   hidePersonaColumn = false,
@@ -160,6 +163,20 @@ export const AutomationsDataTable = ({
                   data-testid={`edit-automation-${auto.id}`}
                 >
                   <Pen className='h-3.5 w-3.5' />
+                </Button>
+              )}
+
+              {/* Clone */}
+              {onClone && (
+                <Button
+                  variant='tertiary-gray'
+                  size='sm'
+                  onClick={() => onClone(auto)}
+                  className='h-8 w-8 p-0 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg'
+                  title='Clone Automation'
+                  data-testid={`clone-automation-${auto.id}`}
+                >
+                  <Copy className='h-3.5 w-3.5' />
                 </Button>
               )}
 
@@ -379,7 +396,7 @@ export const AutomationsDataTable = ({
     );
 
     return cols;
-  }, [runningId, hidePersonaColumn, onEdit, onDelete, onViewDetails, updateAutomation, triggerAutomation]);
+  }, [runningId, hidePersonaColumn, onEdit, onClone, onDelete, onViewDetails, updateAutomation, triggerAutomation]);
 
   return (
     <DataTable

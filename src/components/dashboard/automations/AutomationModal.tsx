@@ -34,6 +34,7 @@ interface AutomationModalProps {
   isOpen: boolean;
   onClose: () => void;
   automation?: Automation | null; // If provided, we are editing
+  cloneFrom?: Automation | null; // If provided, we are cloning
   fixedPersonaId?: number; // If opened from persona details tab
 }
 
@@ -41,6 +42,7 @@ export const AutomationModal = ({
   isOpen,
   onClose,
   automation,
+  cloneFrom,
   fixedPersonaId,
 }: AutomationModalProps) => {
   const token = useAppSelector((store) => store.auth.token);
@@ -54,36 +56,38 @@ export const AutomationModal = ({
   const personas = personasResponse?.data || [];
 
   // Form State
-  const [name, setName] = useState<string>(automation?.name || '');
+  const [name, setName] = useState<string>(
+    automation?.name || (cloneFrom?.name ? `${cloneFrom.name} (Copy)` : '')
+  );
   const [personaId, setPersonaId] = useState<number>(
-    automation?.personaId || fixedPersonaId || 0
+    automation?.personaId || cloneFrom?.personaId || fixedPersonaId || 0
   );
   const [platform, setPlatform] = useState<AutomationPlatform>(
-    automation?.platform || 'YOUTUBE'
+    automation?.platform || cloneFrom?.platform || 'YOUTUBE'
   );
   const [target, setTarget] = useState<AutomationTarget>(
-    automation?.target || 'PROJECT'
+    automation?.target || cloneFrom?.target || 'PROJECT'
   );
   const [uploadType, setUploadType] = useState<AutomationUploadType>(
-    automation?.uploadType || 'DRAFT'
+    automation?.uploadType || cloneFrom?.uploadType || 'DRAFT'
   );
   const [frequency, setFrequency] = useState<AutomationFrequency>(
-    automation?.frequency || 'DAILY'
+    automation?.frequency || cloneFrom?.frequency || 'DAILY'
   );
   const [postsPerPeriod, setPostsPerPeriod] = useState<number>(
-    automation?.postsPerPeriod ?? 1
+    automation?.postsPerPeriod ?? cloneFrom?.postsPerPeriod ?? 1
   );
   const [timeRangeStart, setTimeRangeStart] = useState<string>(
-    automation?.timeRangeStart || '14:00'
+    automation?.timeRangeStart || cloneFrom?.timeRangeStart || '14:00'
   );
   const [timeRangeEnd, setTimeRangeEnd] = useState<string>(
-    automation?.timeRangeEnd || '18:00'
+    automation?.timeRangeEnd || cloneFrom?.timeRangeEnd || '18:00'
   );
   const [cooldownHours, setCooldownHours] = useState<number>(
-    automation?.cooldownHours ?? 24
+    automation?.cooldownHours ?? cloneFrom?.cooldownHours ?? 24
   );
   const [isEnabled, setIsEnabled] = useState<boolean>(
-    automation?.isEnabled ?? true
+    automation?.isEnabled ?? cloneFrom?.isEnabled ?? true
   );
   const [errorMsg, setErrorMsg] = useState<string>('');
 
@@ -109,6 +113,18 @@ export const AutomationModal = ({
         setTimeRangeEnd(automation.timeRangeEnd || '18:00');
         setCooldownHours(automation.cooldownHours ?? 24);
         setIsEnabled(automation.isEnabled ?? true);
+      } else if (cloneFrom) {
+        setName(cloneFrom.name ? `${cloneFrom.name} (Copy)` : '');
+        setPersonaId(cloneFrom.personaId);
+        setPlatform(cloneFrom.platform);
+        setTarget(cloneFrom.target);
+        setUploadType(cloneFrom.uploadType);
+        setFrequency(cloneFrom.frequency);
+        setPostsPerPeriod(cloneFrom.postsPerPeriod ?? 1);
+        setTimeRangeStart(cloneFrom.timeRangeStart || '14:00');
+        setTimeRangeEnd(cloneFrom.timeRangeEnd || '18:00');
+        setCooldownHours(cloneFrom.cooldownHours ?? 24);
+        setIsEnabled(cloneFrom.isEnabled ?? true);
       } else {
         const defaultPersona = fixedPersonaId || (personas.length > 0 ? personas[0].id : 0);
         setName('');
@@ -125,7 +141,7 @@ export const AutomationModal = ({
       }
       setErrorMsg('');
     }
-  }, [isOpen, automation, fixedPersonaId, personas]);
+  }, [isOpen, automation, cloneFrom, fixedPersonaId, personas]);
 
   if (!isOpen) return null;
 
@@ -217,7 +233,11 @@ export const AutomationModal = ({
             </div>
             <div>
               <h2 className='text-base font-semibold text-gray-900'>
-                {automation ? 'Edit Publishing Automation' : 'Create Publishing Automation'}
+                {cloneFrom
+                  ? 'Clone Publishing Automation'
+                  : automation
+                  ? 'Edit Publishing Automation'
+                  : 'Create Publishing Automation'}
               </h2>
               <p className='text-xs text-gray-500'>
                 Configure scheduled automatic uploads with randomized posting windows

@@ -19,6 +19,7 @@ export const AutomationsPage = () => {
   const token = useAppSelector((store) => store.auth.token);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
+  const [cloneAutomation, setCloneAutomation] = useState<Automation | null>(null);
   const [detailsAutomation, setDetailsAutomation] = useState<Automation | null>(null);
 
   // Filters
@@ -101,11 +102,19 @@ export const AutomationsPage = () => {
 
   const handleCreate = () => {
     setEditingAutomation(null);
+    setCloneAutomation(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (automation: Automation) => {
     setEditingAutomation(automation);
+    setCloneAutomation(null);
+    setIsModalOpen(true);
+  };
+
+  const handleClone = (automation: Automation) => {
+    setEditingAutomation(null);
+    setCloneAutomation(automation);
     setIsModalOpen(true);
   };
 
@@ -236,6 +245,7 @@ export const AutomationsPage = () => {
           data={filteredData}
           isLoading={isLoading}
           onEdit={handleEdit}
+          onClone={handleClone}
           onDelete={handleDelete}
           onViewDetails={(auto) => setDetailsAutomation(auto)}
           hidePersonaColumn={false}
@@ -251,14 +261,16 @@ export const AutomationsPage = () => {
         )}
       </div>
 
-      {/* Create / Edit Modal */}
+      {/* Create / Edit / Clone Modal */}
       <AutomationModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setEditingAutomation(null);
+          setCloneAutomation(null);
         }}
         automation={editingAutomation}
+        cloneFrom={cloneAutomation}
       />
 
       {/* Details & Telemetry Modal */}
@@ -269,6 +281,10 @@ export const AutomationsPage = () => {
         onEdit={(auto) => {
           setDetailsAutomation(null);
           handleEdit(auto);
+        }}
+        onClone={(auto) => {
+          setDetailsAutomation(null);
+          handleClone(auto);
         }}
       />
     </div>

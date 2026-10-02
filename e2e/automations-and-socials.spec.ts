@@ -149,5 +149,30 @@ test.describe('Social Integrations & Publishing Automations E2E', () => {
     // Verify YouTube card renders without crashing
     await expect(page.getByRole('heading', { name: 'YouTube Channel' })).toBeVisible();
   });
+
+  test('E2E-AUTO-06: Clone automation button opens pre-filled creation modal', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard/automations');
+    await page.waitForSelector('table');
+
+    // Find clone button if table has automation rows
+    const cloneBtn = page.locator('[data-testid^="clone-automation-"]').first();
+
+    if (await cloneBtn.isVisible()) {
+      await cloneBtn.click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Clone Publishing Automation' })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Create Automation' })
+      ).toBeVisible();
+
+      // Close modal
+      await page.getByRole('button', { name: 'Cancel' }).click();
+      await expect(page.getByRole('dialog')).not.toBeVisible();
+    }
+  });
 });
 

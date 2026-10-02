@@ -12,6 +12,7 @@ import {
   Play,
   Loader2,
   ExternalLink,
+  Copy,
 } from 'lucide-react';
 import { Automation } from '@/types/automation';
 import { useTriggerAutomationMutation } from '@/queries/automationActions';
@@ -24,6 +25,7 @@ interface AutomationDetailsModalProps {
   onClose: () => void;
   automation: Automation | null;
   onEdit?: (automation: Automation) => void;
+  onClone?: (automation: Automation) => void;
 }
 
 export const AutomationDetailsModal = ({
@@ -31,6 +33,7 @@ export const AutomationDetailsModal = ({
   onClose,
   automation,
   onEdit,
+  onClone,
 }: AutomationDetailsModalProps) => {
   const token = useAppSelector((store) => store.auth.token);
   const { mutateAsync: triggerAutomation, isLoading: isTriggering } =
@@ -328,6 +331,23 @@ export const AutomationDetailsModal = ({
           </Button>
 
           <div className='flex items-center gap-2'>
+            {onClone && (
+              <Button
+                type='button'
+                variant='secondary-gray'
+                size='sm'
+                onClick={() => {
+                  onClose();
+                  onClone(automation);
+                }}
+                className='text-xs flex items-center gap-1.5'
+                data-testid={`clone-automation-detail-${automation.id}`}
+              >
+                <Copy className='w-3.5 h-3.5' />
+                Clone
+              </Button>
+            )}
+
             {onEdit && (
               <Button
                 type='button'

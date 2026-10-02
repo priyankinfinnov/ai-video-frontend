@@ -22,6 +22,7 @@ export const PersonaAutomationsTab = ({ persona }: PersonaAutomationsTabProps) =
   const token = useAppSelector((store) => store.auth.token);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
+  const [cloneAutomation, setCloneAutomation] = useState<Automation | null>(null);
   const [detailsAutomation, setDetailsAutomation] = useState<Automation | null>(null);
 
   const {
@@ -63,11 +64,19 @@ export const PersonaAutomationsTab = ({ persona }: PersonaAutomationsTabProps) =
 
   const handleOpenCreate = () => {
     setEditingAutomation(null);
+    setCloneAutomation(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (automation: Automation) => {
     setEditingAutomation(automation);
+    setCloneAutomation(null);
+    setIsModalOpen(true);
+  };
+
+  const handleClone = (automation: Automation) => {
+    setEditingAutomation(null);
+    setCloneAutomation(automation);
     setIsModalOpen(true);
   };
 
@@ -119,6 +128,7 @@ export const PersonaAutomationsTab = ({ persona }: PersonaAutomationsTabProps) =
           data={filteredData}
           isLoading={isLoading}
           onEdit={handleEdit}
+          onClone={handleClone}
           onDelete={handleDelete}
           onViewDetails={(a) => setDetailsAutomation(a)}
           hidePersonaColumn={true}
@@ -139,8 +149,10 @@ export const PersonaAutomationsTab = ({ persona }: PersonaAutomationsTabProps) =
         onClose={() => {
           setIsModalOpen(false);
           setEditingAutomation(null);
+          setCloneAutomation(null);
         }}
         automation={editingAutomation}
+        cloneFrom={cloneAutomation}
         fixedPersonaId={persona.id}
       />
 
@@ -151,6 +163,10 @@ export const PersonaAutomationsTab = ({ persona }: PersonaAutomationsTabProps) =
         onEdit={(a) => {
           setDetailsAutomation(null);
           handleEdit(a);
+        }}
+        onClone={(a) => {
+          setDetailsAutomation(null);
+          handleClone(a);
         }}
       />
     </div>
