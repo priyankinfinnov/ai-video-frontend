@@ -6,6 +6,7 @@ import { DataTable, DataTableFilterBar, DataTablePagination } from '@/components
 import { useGetVideoPartAssetsQuery } from '@/queries/projectQueries';
 import { useAppSelector } from '@/store/store';
 import useDataTableFilters from '@/hooks/useDataTableFilters';
+import { resolveAssetUrl } from '@/components/dashboard/personaDetails/assetHelper';
 
 interface VideoPartAssetsTabProps {
   projectId: number;
@@ -202,7 +203,7 @@ export const VideoPartAssetsTab = ({ projectId }: VideoPartAssetsTabProps) => {
           const cleanPath = normalizedPath.includes('storage/')
             ? normalizedPath.substring(normalizedPath.indexOf('storage/'))
             : normalizedPath;
-          const mediaUrl = `http://localhost:6001/${cleanPath}`;
+          const mediaUrl = resolveAssetUrl(cleanPath) || '';
           const isVideo = row.original.assetType === 'VIDEO' || path.endsWith('.mp4');
 
           return (

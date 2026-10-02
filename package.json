@@ -8,7 +8,9 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "cross-env NODE_ENV=test playwright test",
+    "test:e2e:ui": "cross-env NODE_ENV=test playwright test --ui",
+    "test:e2e:debug": "cross-env NODE_ENV=test playwright test --debug"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.0.4",
@@ -43,6 +45,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.16",
+    "cross-env": "^7.0.3",
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",

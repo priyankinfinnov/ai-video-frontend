@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ShortsClip, ShortsClipStatus } from '@/types/project';
 import { getCreatedDate } from '@/utils/utils';
+import { resolveAssetUrl } from '@/components/dashboard/personaDetails/assetHelper';
 
 interface ShortClipCardProps {
   clip: ShortsClip;
@@ -88,7 +89,7 @@ export const ShortClipCard: React.FC<ShortClipCardProps> = ({
   const cleanPath = normalizedPath.includes('storage/')
     ? normalizedPath.substring(normalizedPath.indexOf('storage/'))
     : normalizedPath;
-  const videoUrl = cleanPath ? `http://localhost:6001/${cleanPath}` : null;
+  const videoUrl = resolveAssetUrl(cleanPath);
 
   // Sync playback when isPlaying prop changes
   useEffect(() => {

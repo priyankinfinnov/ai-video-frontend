@@ -7,6 +7,8 @@ import { useGetVideoPartsQuery } from '@/queries/projectQueries';
 import { useAppSelector } from '@/store/store';
 import useDataTableFilters from '@/hooks/useDataTableFilters';
 
+import { resolveAssetUrl } from '@/components/dashboard/personaDetails/assetHelper';
+
 interface VideoPartsTabProps {
   projectId: number;
 }
@@ -169,7 +171,7 @@ export const VideoPartsTab = ({ projectId }: VideoPartsTabProps) => {
           const cleanPath = normalizedPath.includes('storage/')
             ? normalizedPath.substring(normalizedPath.indexOf('storage/'))
             : normalizedPath;
-          const audioUrl = `http://localhost:6001/${cleanPath}`;
+          const audioUrl = resolveAssetUrl(cleanPath) || '';
 
           return (
             <div className='flex items-center gap-2'>

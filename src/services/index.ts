@@ -2,8 +2,23 @@ import axios from 'axios';
 import { COOKIE_NAMES } from '@/constants/constants';
 import { getCookieValue } from '@/utils/utils';
 
+export const getApiBaseUrl = (): string => {
+  if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env?.NEXT_PUBLIC_API_URL) {
+    return import.meta.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  return 'http://localhost:6001';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
+
 export const apiFetch = axios.create({
-  baseURL: 'http://localhost:6001',
+  baseURL: API_BASE_URL,
   headers: {
     Accept: 'application/json',
   },

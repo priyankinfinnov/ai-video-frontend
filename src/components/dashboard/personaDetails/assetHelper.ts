@@ -1,4 +1,5 @@
 import toast from 'react-hot-toast';
+import { getApiBaseUrl } from '@/services';
 
 export const resolveAssetUrl = (path?: string | null): string | null => {
   if (!path || !path.trim()) return null;
@@ -17,11 +18,13 @@ export const resolveAssetUrl = (path?: string | null): string | null => {
     return null;
   }
 
+  const baseUrl = getApiBaseUrl();
+
   if (normalized.startsWith('/')) {
-    return `http://localhost:6001${normalized}`;
+    return `${baseUrl}${normalized}`;
   }
 
-  return `http://localhost:6001/${normalized}`;
+  return `${baseUrl}/${normalized}`;
 };
 
 export const getFileName = (path?: string | null): string => {

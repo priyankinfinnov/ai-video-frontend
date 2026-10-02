@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { VideoProject } from '@/types/project';
 import { Button } from '@/components/ui/button';
+import { resolveAssetUrl } from '@/components/dashboard/personaDetails/assetHelper';
 
 interface VideoPlayerTabProps {
   project: VideoProject;
@@ -23,7 +24,7 @@ export const VideoPlayerTab = ({ project }: VideoPlayerTabProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Determine stream URL for 480p stitched video
-  const videoUrl = `http://localhost:6001/storage/assets/project_${project.id}/stitched_video_480p.mp4`;
+  const videoUrl = resolveAssetUrl(`/storage/assets/project_${project.id}/stitched_video_480p.mp4`) || '';
 
   const copyUrl = () => {
     navigator.clipboard.writeText(videoUrl);

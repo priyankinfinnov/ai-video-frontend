@@ -21,6 +21,7 @@ import { useAppSelector } from '@/store/store';
 import useDataTableFilters from '@/hooks/useDataTableFilters';
 import { getCreatedDate } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
+import { resolveAssetUrl } from '@/components/dashboard/personaDetails/assetHelper';
 import { ShortClipCard } from './ShortClipCard';
 import { ShortClipModal } from './ShortClipModal';
 import { ClipUploadModal } from './ClipUploadModal';
@@ -465,7 +466,7 @@ export const ShortsClipsTab = ({ projectId, personaId }: ShortsClipsTabProps) =>
           const cleanPath = normalizedPath.includes('storage/')
             ? normalizedPath.substring(normalizedPath.indexOf('storage/'))
             : normalizedPath;
-          const videoUrl = `http://localhost:6001/${cleanPath}`;
+          const videoUrl = resolveAssetUrl(cleanPath) || '';
 
           return (
             <div className='flex items-center gap-2'>

@@ -23,6 +23,7 @@ import {
 import { ShortsClip, ShortsClipStatus } from '@/types/project';
 import { Button } from '@/components/ui/button';
 import { getCreatedDate } from '@/utils/utils';
+import { resolveAssetUrl } from '@/components/dashboard/personaDetails/assetHelper';
 
 interface ShortClipModalProps {
   clip: ShortsClip | null;
@@ -91,7 +92,7 @@ export const ShortClipModal: React.FC<ShortClipModalProps> = ({
   const cleanPath = normalizedPath.includes('storage/')
     ? normalizedPath.substring(normalizedPath.indexOf('storage/'))
     : normalizedPath;
-  const videoUrl = cleanPath ? `http://localhost:6001/${cleanPath}` : null;
+  const videoUrl = resolveAssetUrl(cleanPath);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
