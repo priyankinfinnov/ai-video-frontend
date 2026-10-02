@@ -1,14 +1,25 @@
 import { useState, useMemo } from 'react';
-import { Plus, Zap } from 'lucide-react';
-import { Automation, AutomationPlatform, AutomationTarget, AutomationUploadType } from '@/types/automation';
+import { useSearchParams } from 'react-router-dom';
+import { Plus, Zap, Sliders, Activity } from 'lucide-react';
+import {
+  Automation,
+  AutomationPlatform,
+  AutomationTarget,
+  AutomationUploadType,
+  AutomationRunStatus,
+} from '@/types/automation';
 import { Persona } from '@/types/persona';
-import { useGetAutomationsQuery } from '@/queries/automationQueries';
+import {
+  useGetAutomationsQuery,
+  useGetAutomationRunsQuery,
+} from '@/queries/automationQueries';
 import { useDeleteAutomationMutation } from '@/queries/automationActions';
 import { useGetPersonasQuery } from '@/queries/personaQueries';
 import { useAppSelector } from '@/store/store';
 import { Button } from '@/components/ui/button';
 import {
   AutomationsDataTable,
+  AutomationRunsDataTable,
   AutomationModal,
   AutomationDetailsModal,
 } from '@/components/dashboard/automations';
@@ -17,12 +28,16 @@ import { DataTableFilterBar, DataTablePagination } from '@/components/common';
 
 export const AutomationsPage = () => {
   const token = useAppSelector((store) => store.auth.token);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'rules' | 'runs') || 'rules';
+  const [activeTab, setActiveTab] = useState<'rules' | 'runs'>(initialTab);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
   const [cloneAutomation, setCloneAutomation] = useState<Automation | null>(null);
   const [detailsAutomation, setDetailsAutomation] = useState<Automation | null>(null);
 
-  // Filters
+  // --- Rules Tab Filters & Pagination ---
   const [selectedPersonaId, setSelectedPersonaId] = useState<number | 'ALL'>('ALL');
   const [selectedPlatform, setSelectedPlatform] = useState<AutomationPlatform | 'ALL'>('ALL');
   const [selectedTarget, setSelectedTarget] = useState<AutomationTarget | 'ALL'>('ALL');
@@ -38,7 +53,25 @@ export const AutomationsPage = () => {
     debouncedSearch,
   } = useDataTableFilters({ initialPage: 1, initialLimit: 50 });
 
-  // Fetch personas for filter dropdown
+  // --- Runs Tab Filters & Pagination ---
+  const [selectedRunPersonaId, setSelectedRunPersonaId] = useState<number | 'ALL'>('ALL');
+  const [selectedRunPlatform, setSelectedRunPlatform] = useState<AutomationPlatform | 'ALL'>('ALL');
+  const [selectedRunTarget, setSelectedRunTarget] = useState<AutomationTarget | 'ALL'>('ALL');
+  const [selectedRunUploadType, setSelectedRunUploadType] = useState<AutomationUploadType | 'ALL'>('ALL');
+  // Default filter for execution runs is 'SUCCESS' as per user requirement
+  const [selectedRunStatus, setSelectedRunStatus] = useState<AutomationRunStatus | 'ALL'>('SUCCESS');
+
+  const {
+    page: runsPage,
+    setPage: setRunsPage,
+    limit: runsLimit,
+    setLimit: setRunsLimit,
+    search: runsSearch,
+    setSearch: setRunsSearch,
+    debouncedSearch: debouncedRunSearch,
+  } = useDataTableFilters({ initialPage: 1, initialLimit: 50 });
+
+  // Fetch personas for filter dropdowns
   const { data: personasResponse } = useGetPersonasQuery({
     token,
     page: 1,
@@ -46,15 +79,31 @@ export const AutomationsPage = () => {
   });
   const personas = personasResponse?.data || [];
 
-  // Automations query
+  // Automations Rules query
   const {
     data: automationsResponse,
-    isLoading,
+    isLoading: isLoadingRules,
   } = useGetAutomationsQuery({
     token,
     personaId: selectedPersonaId === 'ALL' ? undefined : selectedPersonaId,
     page,
     limit,
+  });
+
+  // Automations Runs query
+  const {
+    data: runsResponse,
+    isLoading: isLoadingRuns,
+  } = useGetAutomationRunsQuery({
+    token,
+    personaId: selectedRunPersonaId === 'ALL' ? undefined : selectedRunPersonaId,
+    platform: selectedRunPlatform === 'ALL' ? undefined : selectedRunPlatform,
+    targetType: selectedRunTarget === 'ALL' ? undefined : selectedRunTarget,
+    uploadType: selectedRunUploadType === 'ALL' ? undefined : selectedRunUploadType,
+    status: selectedRunStatus === 'ALL' ? undefined : selectedRunStatus,
+    search: debouncedRunSearch.trim() || undefined,
+    page: runsPage,
+    limit: runsLimit,
   });
 
   const { mutateAsync: deleteAutomation } = useDeleteAutomationMutation(token);
@@ -65,22 +114,24 @@ export const AutomationsPage = () => {
   );
   const pagination = automationsResponse?.pagination;
 
-  // Filter client-side by search and dropdowns
-  const filteredData = useMemo(() => {
+  const runsList = useMemo(
+    () => runsResponse?.data || [],
+    [runsResponse?.data]
+  );
+  const runsPagination = runsResponse?.pagination;
+
+  // Filter Rules client-side by search and dropdowns
+  const filteredRulesData = useMemo(() => {
     return automationsList.filter((auto) => {
-      // Platform filter
       if (selectedPlatform !== 'ALL' && auto.platform !== selectedPlatform) {
         return false;
       }
-      // Target filter
       if (selectedTarget !== 'ALL' && auto.target !== selectedTarget) {
         return false;
       }
-      // Upload Type filter
       if (selectedUploadType !== 'ALL' && auto.uploadType !== selectedUploadType) {
         return false;
       }
-      // Text search
       if (debouncedSearch.trim()) {
         const query = debouncedSearch.toLowerCase();
         const nameMatch = auto.name?.toLowerCase().includes(query);
@@ -99,6 +150,14 @@ export const AutomationsPage = () => {
       return true;
     });
   }, [automationsList, selectedPlatform, selectedTarget, selectedUploadType, debouncedSearch]);
+
+  const handleTabSwitch = (tab: 'rules' | 'runs') => {
+    setActiveTab(tab);
+    setSearchParams((prev) => {
+      prev.set('tab', tab);
+      return prev;
+    });
+  };
 
   const handleCreate = () => {
     setEditingAutomation(null);
@@ -137,7 +196,9 @@ export const AutomationsPage = () => {
               Publishing Automations
             </h1>
             <span className='font-mono text-xs font-semibold text-primary-800 bg-primary-100 px-2.5 py-0.5 rounded-md'>
-              {pagination?.totalCount ?? filteredData.length} rules
+              {activeTab === 'rules'
+                ? `${pagination?.totalCount ?? filteredRulesData.length} rules`
+                : `${runsPagination?.totalCount ?? runsList.length} runs`}
             </span>
           </div>
           <p className='text-xs text-gray-500 max-w-2xl'>
@@ -156,110 +217,271 @@ export const AutomationsPage = () => {
         </Button>
       </div>
 
-      {/* Main Content Card */}
-      <div className='bg-white rounded-xl border border-gray-200 shadow-xs p-5 space-y-4'>
-        {/* Filter Controls Row */}
-        <div className='flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3'>
-          {/* Multi-Select Filter Bar */}
-          <div className='flex items-center gap-2 flex-wrap text-xs'>
-            {/* Persona Dropdown */}
-            <div className='flex items-center gap-1.5'>
-              <span className='text-gray-500 font-medium'>Persona:</span>
-              <select
-                value={selectedPersonaId}
-                onChange={(e) =>
-                  setSelectedPersonaId(
-                    e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)
-                  )
-                }
-                className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
-              >
-                <option value='ALL'>All Personas</option>
-                {personas.map((p: Persona) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+      {/* Tab Switcher */}
+      <div className='flex items-center gap-2 border-b border-gray-200 pb-0'>
+        <button
+          onClick={() => handleTabSwitch('rules')}
+          data-testid='tab-automation-rules'
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+            activeTab === 'rules'
+              ? 'border-primary-600 text-primary-700 bg-primary-50/50 rounded-t-lg'
+              : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300'
+          }`}
+        >
+          <Sliders className='w-4 h-4' />
+          Automation Rules
+        </button>
+
+        <button
+          onClick={() => handleTabSwitch('runs')}
+          data-testid='tab-execution-runs'
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+            activeTab === 'runs'
+              ? 'border-primary-600 text-primary-700 bg-primary-50/50 rounded-t-lg'
+              : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300'
+          }`}
+        >
+          <Activity className='w-4 h-4' />
+          Execution Runs & History
+        </button>
+      </div>
+
+      {/* Main Content Card: Rules Tab */}
+      {activeTab === 'rules' && (
+        <div className='bg-white rounded-xl border border-gray-200 shadow-xs p-5 space-y-4'>
+          {/* Rules Filter Controls Row */}
+          <div className='flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3'>
+            {/* Multi-Select Filter Bar */}
+            <div className='flex items-center gap-2 flex-wrap text-xs'>
+              {/* Persona Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Persona:</span>
+                <select
+                  value={selectedPersonaId}
+                  onChange={(e) =>
+                    setSelectedPersonaId(
+                      e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)
+                    )
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='persona-filter-select'
+                >
+                  <option value='ALL'>All Personas</option>
+                  {personas.map((p: Persona) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Platform Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Platform:</span>
+                <select
+                  value={selectedPlatform}
+                  onChange={(e) =>
+                    setSelectedPlatform(e.target.value as AutomationPlatform | 'ALL')
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='platform-filter-select'
+                >
+                  <option value='ALL'>All Platforms</option>
+                  <option value='YOUTUBE'>YouTube</option>
+                  <option value='INSTAGRAM'>Instagram</option>
+                </select>
+              </div>
+
+              {/* Target Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Target:</span>
+                <select
+                  value={selectedTarget}
+                  onChange={(e) =>
+                    setSelectedTarget(e.target.value as AutomationTarget | 'ALL')
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='target-filter-select'
+                >
+                  <option value='ALL'>All Targets</option>
+                  <option value='PROJECT'>Master Video</option>
+                  <option value='SHORTS_CLIP'>Shorts Clip</option>
+                </select>
+              </div>
+
+              {/* Upload Type Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Mode:</span>
+                <select
+                  value={selectedUploadType}
+                  onChange={(e) =>
+                    setSelectedUploadType(e.target.value as AutomationUploadType | 'ALL')
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='mode-filter-select'
+                >
+                  <option value='ALL'>All Modes</option>
+                  <option value='DRAFT'>Draft</option>
+                  <option value='ACTUAL_POST'>Publish (Actual Post)</option>
+                </select>
+              </div>
             </div>
 
-            {/* Platform Dropdown */}
-            <div className='flex items-center gap-1.5'>
-              <span className='text-gray-500 font-medium'>Platform:</span>
-              <select
-                value={selectedPlatform}
-                onChange={(e) =>
-                  setSelectedPlatform(e.target.value as AutomationPlatform | 'ALL')
-                }
-                className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
-              >
-                <option value='ALL'>All Platforms</option>
-                <option value='YOUTUBE'>YouTube</option>
-                <option value='INSTAGRAM'>Instagram</option>
-              </select>
-            </div>
-
-            {/* Target Dropdown */}
-            <div className='flex items-center gap-1.5'>
-              <span className='text-gray-500 font-medium'>Target:</span>
-              <select
-                value={selectedTarget}
-                onChange={(e) =>
-                  setSelectedTarget(e.target.value as AutomationTarget | 'ALL')
-                }
-                className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
-              >
-                <option value='ALL'>All Targets</option>
-                <option value='PROJECT'>Master Video</option>
-                <option value='SHORTS_CLIP'>Shorts Clip</option>
-              </select>
-            </div>
-
-            {/* Upload Type Dropdown */}
-            <div className='flex items-center gap-1.5'>
-              <span className='text-gray-500 font-medium'>Mode:</span>
-              <select
-                value={selectedUploadType}
-                onChange={(e) =>
-                  setSelectedUploadType(e.target.value as AutomationUploadType | 'ALL')
-                }
-                className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
-              >
-                <option value='ALL'>All Modes</option>
-                <option value='DRAFT'>Draft</option>
-                <option value='ACTUAL_POST'>Publish (Actual Post)</option>
-              </select>
-            </div>
+            {/* Search Box */}
+            <DataTableFilterBar
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder='Search automations...'
+            />
           </div>
 
-          {/* Search Box */}
-          <DataTableFilterBar
-            searchValue={search}
-            onSearchChange={setSearch}
-            searchPlaceholder='Search automations...'
+          {/* Data Table */}
+          <AutomationsDataTable
+            data={filteredRulesData}
+            isLoading={isLoadingRules}
+            onEdit={handleEdit}
+            onClone={handleClone}
+            onDelete={handleDelete}
+            onViewDetails={(auto) => setDetailsAutomation(auto)}
+            hidePersonaColumn={false}
           />
+
+          {/* Pagination */}
+          {pagination && (
+            <DataTablePagination
+              pagination={pagination}
+              onPageChange={setPage}
+              onLimitChange={setLimit}
+            />
+          )}
         </div>
+      )}
 
-        {/* Data Table */}
-        <AutomationsDataTable
-          data={filteredData}
-          isLoading={isLoading}
-          onEdit={handleEdit}
-          onClone={handleClone}
-          onDelete={handleDelete}
-          onViewDetails={(auto) => setDetailsAutomation(auto)}
-          hidePersonaColumn={false}
-        />
+      {/* Main Content Card: Runs Tab */}
+      {activeTab === 'runs' && (
+        <div className='bg-white rounded-xl border border-gray-200 shadow-xs p-5 space-y-4' data-testid='execution-runs-section'>
+          {/* Runs Filter Controls Row */}
+          <div className='flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3'>
+            {/* Multi-Select Filter Bar */}
+            <div className='flex items-center gap-2 flex-wrap text-xs'>
+              {/* Persona Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Persona:</span>
+                <select
+                  value={selectedRunPersonaId}
+                  onChange={(e) =>
+                    setSelectedRunPersonaId(
+                      e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)
+                    )
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='run-persona-filter-select'
+                >
+                  <option value='ALL'>All Personas</option>
+                  {personas.map((p: Persona) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        {/* Pagination */}
-        {pagination && (
-          <DataTablePagination
-            pagination={pagination}
-            onPageChange={setPage}
-            onLimitChange={setLimit}
+              {/* Platform Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Platform:</span>
+                <select
+                  value={selectedRunPlatform}
+                  onChange={(e) =>
+                    setSelectedRunPlatform(e.target.value as AutomationPlatform | 'ALL')
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='run-platform-filter-select'
+                >
+                  <option value='ALL'>All Platforms</option>
+                  <option value='YOUTUBE'>YouTube</option>
+                  <option value='INSTAGRAM'>Instagram</option>
+                </select>
+              </div>
+
+              {/* Target Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Target:</span>
+                <select
+                  value={selectedRunTarget}
+                  onChange={(e) =>
+                    setSelectedRunTarget(e.target.value as AutomationTarget | 'ALL')
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='run-target-filter-select'
+                >
+                  <option value='ALL'>All Targets</option>
+                  <option value='PROJECT'>Master Video</option>
+                  <option value='SHORTS_CLIP'>Shorts Clip</option>
+                </select>
+              </div>
+
+              {/* Upload Type Dropdown */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Mode:</span>
+                <select
+                  value={selectedRunUploadType}
+                  onChange={(e) =>
+                    setSelectedRunUploadType(e.target.value as AutomationUploadType | 'ALL')
+                  }
+                  className='text-xs rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='run-mode-filter-select'
+                >
+                  <option value='ALL'>All Modes</option>
+                  <option value='DRAFT'>Draft</option>
+                  <option value='ACTUAL_POST'>Publish (Actual Post)</option>
+                </select>
+              </div>
+
+              {/* Status Dropdown (Default: SUCCESS) */}
+              <div className='flex items-center gap-1.5'>
+                <span className='text-gray-500 font-medium'>Status:</span>
+                <select
+                  value={selectedRunStatus}
+                  onChange={(e) =>
+                    setSelectedRunStatus(e.target.value as AutomationRunStatus | 'ALL')
+                  }
+                  className='text-xs font-medium rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:border-primary-500 focus:outline-none'
+                  data-testid='run-status-filter-select'
+                >
+                  <option value='ALL'>All Statuses</option>
+                  <option value='SUCCESS'>Success</option>
+                  <option value='FAILED'>Failed</option>
+                  <option value='SKIPPED_NO_ASSETS'>Skipped (No Assets)</option>
+                  <option value='PENDING'>Pending / In Progress</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Search Box */}
+            <DataTableFilterBar
+              searchValue={runsSearch}
+              onSearchChange={setRunsSearch}
+              searchPlaceholder='Search execution runs...'
+            />
+          </div>
+
+          {/* Runs Data Table */}
+          <AutomationRunsDataTable
+            data={runsList}
+            isLoading={isLoadingRuns}
+            hidePersonaColumn={false}
           />
-        )}
-      </div>
+
+          {/* Pagination */}
+          {runsPagination && (
+            <DataTablePagination
+              pagination={runsPagination}
+              onPageChange={setRunsPage}
+              onLimitChange={setRunsLimit}
+            />
+          )}
+        </div>
+      )}
 
       {/* Create / Edit / Clone Modal */}
       <AutomationModal

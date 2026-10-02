@@ -121,3 +121,70 @@ export const useGetAutomationQuery = ({
     refetchOnMount: true,
   });
 };
+
+export const useGetAutomationRunsQuery = (params: import('@/types/automation').GetAutomationRunsQueryParams) => {
+  const activeToken = params.token || getCookieValue(COOKIE_NAMES.TOKEN);
+  const teamId = extractTeamId(activeToken);
+
+  const {
+    personaId,
+    automationId,
+    platform,
+    targetType,
+    uploadType,
+    status,
+    search,
+    page = 1,
+    limit = 50,
+  } = params;
+
+  return useQuery<PaginatedResponse<import('@/types/automation').AutomationRun>>({
+    queryKey: [
+      'automationRuns',
+      { personaId, automationId, platform, targetType, uploadType, status, search, page, limit, teamId },
+    ],
+    queryFn: async () => {
+      const query = new URLSearchParams();
+      if (personaId) query.append('personaId', String(personaId));
+      if (automationId) query.append('automationId', String(automationId));
+      if (platform) query.append('platform', platform);
+      if (targetType) query.append('targetType', targetType);
+      if (uploadType) query.append('uploadType', uploadType);
+      if (status) query.append('status', status);
+      if (search) query.append('search', search);
+      query.append('page', String(page));
+      query.append('limit', String(limit));
+
+      const response = await apiFetch.get(`${API_BASE}/automations/runs?${query.toString()}`);
+      const obj = response.data || {};
+      if (Array.isArray(obj.data)) {
+        return {
+          data: obj.data as import('@/types/automation').AutomationRun[],
+          pagination: obj.pagination || {
+            page,
+            limit,
+            totalCount: obj.data.length,
+            totalPages: Math.ceil(obj.data.length / limit) || 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+          },
+        };
+      }
+      return {
+        data: [],
+        pagination: {
+          page: 1,
+          limit,
+          totalCount: 0,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+    },
+    enabled: !!activeToken,
+    keepPreviousData: true,
+    refetchOnMount: true,
+  });
+};
+

@@ -81,8 +81,10 @@ AI-vid-frontend/
 | **E2E-10** | Shorts Clips & Status Editing | Opens shorts clips view, opens `ShortClipModal` or `ShortsProjectEditModal`, edits status, verifies status badge update. |
 | **E2E-11** | Automations & Social Integrations | Navigates to `/dashboard/automations`, creates/edits automation trigger configurations (verifying `name`, `postsPerPeriod`, `uploadType`, and multi-frequency cadence options), verifies persona social integration tab connections. |
 | **E2E-12** | Settings & Team Management | Navigates to `/dashboard/settings`, verifies user profile info, inspects team details, tests member role updates and invitation dialogs. |
+| **E2E-13** | Execution Runs & Filter Controls | Switches between `Automation Rules` and `Execution Runs` tabs, verifies filter controls (Persona, Platform, Target, Mode, Status), confirms default status filter is `SUCCESS`, toggles status dropdown values. |
 
 ---
+
 
 ## 6. Running Playwright Tests
 

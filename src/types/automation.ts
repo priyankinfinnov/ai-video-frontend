@@ -84,3 +84,63 @@ export interface TriggerAutomationResponse {
     url?: string;
   };
 }
+
+export type AutomationRunStatus =
+  | 'SUCCESS'
+  | 'FAILED'
+  | 'SKIPPED_NO_ASSETS'
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | string;
+
+export interface AutomationRun {
+  id: number;
+  teamId?: number;
+  automationId: number;
+  personaId: number;
+  platform: AutomationPlatform | string;
+  targetType: AutomationTarget | string;
+  uploadType: AutomationUploadType | string;
+  videoProjectId?: number | null;
+  shortsClipId?: number | null;
+  status: AutomationRunStatus;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  title?: string | null;
+  postUrl?: string | null;
+  mediaId?: string | null;
+  errorMessage?: string | null;
+  isManualTrigger?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  persona?: {
+    id: number;
+    name: string;
+  } | null;
+  automation?: {
+    id: number;
+    name?: string | null;
+  } | null;
+  videoProject?: {
+    id: number;
+    rawInputText?: string | null;
+  } | null;
+  shortsClip?: {
+    id: number;
+    title?: string | null;
+  } | null;
+}
+
+export interface GetAutomationRunsQueryParams {
+  token?: string | null;
+  personaId?: number;
+  automationId?: number;
+  platform?: AutomationPlatform;
+  targetType?: AutomationTarget;
+  uploadType?: AutomationUploadType;
+  status?: AutomationRunStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+

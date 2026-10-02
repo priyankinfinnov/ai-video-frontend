@@ -174,5 +174,51 @@ test.describe('Social Integrations & Publishing Automations E2E', () => {
       await expect(page.getByRole('dialog')).not.toBeVisible();
     }
   });
+
+  test('E2E-AUTO-07: Execution Runs tab switching, filter controls, and default SUCCESS status filter', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard/automations');
+
+    // Check Automation Rules and Execution Runs tabs exist
+    const rulesTab = page.getByTestId('tab-automation-rules');
+    const runsTab = page.getByTestId('tab-execution-runs');
+
+    await expect(rulesTab).toBeVisible();
+    await expect(runsTab).toBeVisible();
+
+    // Click Execution Runs tab
+    await runsTab.click();
+    await expect(page).toHaveURL(/.*tab=runs/);
+    await expect(page.getByTestId('execution-runs-section')).toBeVisible();
+
+    // Verify filter dropdowns exist in Runs tab
+    const runPersonaSelect = page.getByTestId('run-persona-filter-select');
+    const runPlatformSelect = page.getByTestId('run-platform-filter-select');
+    const runTargetSelect = page.getByTestId('run-target-filter-select');
+    const runModeSelect = page.getByTestId('run-mode-filter-select');
+    const runStatusSelect = page.getByTestId('run-status-filter-select');
+
+    await expect(runPersonaSelect).toBeVisible();
+    await expect(runPlatformSelect).toBeVisible();
+    await expect(runTargetSelect).toBeVisible();
+    await expect(runModeSelect).toBeVisible();
+    await expect(runStatusSelect).toBeVisible();
+
+    // Assert default status filter value is SUCCESS
+    await expect(runStatusSelect).toHaveValue('SUCCESS');
+
+    // Change status filter to ALL and FAILED
+    await runStatusSelect.selectOption('ALL');
+    await expect(runStatusSelect).toHaveValue('ALL');
+
+    await runStatusSelect.selectOption('FAILED');
+    await expect(runStatusSelect).toHaveValue('FAILED');
+
+    // Switch back to Rules tab
+    await rulesTab.click();
+    await expect(page).toHaveURL(/.*tab=rules/);
+  });
 });
+
 

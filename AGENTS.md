@@ -54,13 +54,15 @@ The application uses an OpenAPI-aligned architecture with generic, highly reusab
   - Project Detailed Workspace: Multi-tab layout featuring Overview, Script Iteration Logs, Shorts Clips, Shorts Projects, Video Parts/Assets, and Video Player tabs.
   - Project & Shorts Form Modals: `ProjectForm` (supporting `generatedScript`, `rawInputText`, and `publishedLink`), `ShortsProjectEditModal`, and direct upload modals (`ProjectUploadModal`, `ClipUploadModal`).
 - **Automations & Social Integrations**:
-  - Automations Dashboard: `/dashboard/automations` (`src/pages/AutomationsPage.tsx`) for background automation pipelines, trigger parameters, custom rule identification (`name`), posting cadence & schedule frequencies (`DAILY`, `MULTIPLE_TIMES_DAILY`, `WEEKLY`, `MULTIPLE_TIMES_WEEKLY`, `EVERY_X_HOURS`, `IMMEDIATE`), max posts per period (`postsPerPeriod`), upload mode (`DRAFT`, `ACTUAL_POST`), and status tracking.
+  - Automations Dashboard: `/dashboard/automations` (`src/pages/AutomationsPage.tsx`) featuring a multi-tab view:
+    - **Automation Rules**: Configure background automation pipelines, trigger parameters, custom rule identification (`name`), posting cadence & schedule frequencies (`DAILY`, `MULTIPLE_TIMES_DAILY`, `WEEKLY`, `MULTIPLE_TIMES_WEEKLY`, `EVERY_X_HOURS`, `IMMEDIATE`), max posts per period (`postsPerPeriod`), upload mode (`DRAFT`, `ACTUAL_POST`), and status tracking.
+    - **Execution Runs & History**: Track execution runs telemetry fetched via `GET /api/automations/runs` using `AutomationRunsDataTable`. Filterable by Persona, Platform (`YOUTUBE`, `INSTAGRAM`), Target (`PROJECT`, `SHORTS_CLIP`), Mode (`DRAFT`, `ACTUAL_POST`), and Execution Status (`SUCCESS`, `FAILED`, `SKIPPED_NO_ASSETS`, `PENDING`), with default status filter set to `SUCCESS`.
   - Social Integrations: Social channel connection management (`socialAccountQueries` & `socialAccountActions`) integrated into persona detail workflows.
 - **Settings & Team Management**:
   - Settings Route: `/dashboard/settings` (`src/pages/SettingsPage.tsx`).
   - User & Team Settings: `UserSettings` (profile metadata display) and `TeamSettings` (team info, member list, role updates, member invitations, and removals via `teamQueries` & `teamActions`).
 - **Cache Invalidation & Feedback**:
-  - All TanStack Query mutations automatically invalidate entity cache keys (`['personas']`, `['projects']`, `['automations']`, `['team']`) and trigger toast notifications via `react-hot-toast`.
+  - All TanStack Query mutations automatically invalidate entity cache keys (`['personas']`, `['projects']`, `['automations']`, `['automationRuns']`, `['team']`) and trigger toast notifications via `react-hot-toast`.
 
 When creating new entity features, reuse `DataTable`, `DataTablePagination`, `DataTableFilterBar`, and `useDataTableFilters` hooks from `src/components/common/` and `src/hooks/useDataTableFilters.ts`.
 
