@@ -54,7 +54,7 @@ The application uses an OpenAPI-aligned architecture with generic, highly reusab
   - Project Detailed Workspace: Multi-tab layout featuring Overview, Script Iteration Logs, Shorts Clips, Shorts Projects, Video Parts/Assets, and Video Player tabs.
   - Project & Shorts Form Modals: `ProjectForm` (supporting `generatedScript`, `rawInputText`, and `publishedLink`), `ShortsProjectEditModal`, and direct upload modals (`ProjectUploadModal`, `ClipUploadModal`).
 - **Automations & Social Integrations**:
-  - Automations Dashboard: `/dashboard/automations` (`src/pages/AutomationsPage.tsx`) for background automation pipelines, trigger parameters, and status tracking.
+  - Automations Dashboard: `/dashboard/automations` (`src/pages/AutomationsPage.tsx`) for background automation pipelines, trigger parameters, custom rule identification (`name`), posting cadence & schedule frequencies (`DAILY`, `MULTIPLE_TIMES_DAILY`, `WEEKLY`, `MULTIPLE_TIMES_WEEKLY`, `EVERY_X_HOURS`, `IMMEDIATE`), max posts per period (`postsPerPeriod`), upload mode (`DRAFT`, `ACTUAL_POST`), and status tracking.
   - Social Integrations: Social channel connection management (`socialAccountQueries` & `socialAccountActions`) integrated into persona detail workflows.
 - **Settings & Team Management**:
   - Settings Route: `/dashboard/settings` (`src/pages/SettingsPage.tsx`).

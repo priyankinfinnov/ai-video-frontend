@@ -82,6 +82,7 @@ export const AutomationsPage = () => {
       // Text search
       if (debouncedSearch.trim()) {
         const query = debouncedSearch.toLowerCase();
+        const nameMatch = auto.name?.toLowerCase().includes(query);
         const personaMatch =
           auto.persona?.name?.toLowerCase().includes(query) ||
           String(auto.personaId).includes(query);
@@ -90,7 +91,7 @@ export const AutomationsPage = () => {
         const typeMatch = auto.uploadType.toLowerCase().includes(query);
         const idMatch = String(auto.id).includes(query);
 
-        if (!personaMatch && !platformMatch && !targetMatch && !typeMatch && !idMatch) {
+        if (!nameMatch && !personaMatch && !platformMatch && !targetMatch && !typeMatch && !idMatch) {
           return false;
         }
       }
@@ -217,7 +218,7 @@ export const AutomationsPage = () => {
               >
                 <option value='ALL'>All Modes</option>
                 <option value='DRAFT'>Draft</option>
-                <option value='PUBLISH'>Publish</option>
+                <option value='ACTUAL_POST'>Publish (Actual Post)</option>
               </select>
             </div>
           </div>

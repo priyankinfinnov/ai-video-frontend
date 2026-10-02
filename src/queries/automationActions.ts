@@ -35,10 +35,13 @@ export const useCreateAutomationMutation = (token?: string | null) => {
 
       const targetType =
         payload.target === 'PROJECT' ? 'LONG_FORM_VIDEO' : payload.target;
+      const uploadType =
+        payload.uploadType === 'PUBLISH' ? 'ACTUAL_POST' : payload.uploadType;
 
       const body = {
         ...payload,
         targetType,
+        uploadType,
         ...(teamId ? { teamId } : {}),
       };
 
@@ -88,9 +91,16 @@ export const useUpdateAutomationMutation = (
           : payload.target
         : undefined;
 
+      const uploadType = payload.uploadType
+        ? payload.uploadType === 'PUBLISH'
+          ? 'ACTUAL_POST'
+          : payload.uploadType
+        : undefined;
+
       const body = {
         ...payload,
         ...(targetType ? { targetType } : {}),
+        ...(uploadType ? { uploadType } : {}),
         ...(teamId ? { teamId } : {}),
       };
 

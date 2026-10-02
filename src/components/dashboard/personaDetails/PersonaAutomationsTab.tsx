@@ -52,6 +52,7 @@ export const PersonaAutomationsTab = ({ persona }: PersonaAutomationsTabProps) =
     const lower = debouncedSearch.toLowerCase();
     return automationsList.filter(
       (a) =>
+        (a.name && a.name.toLowerCase().includes(lower)) ||
         a.platform.toLowerCase().includes(lower) ||
         a.target.toLowerCase().includes(lower) ||
         a.uploadType.toLowerCase().includes(lower) ||

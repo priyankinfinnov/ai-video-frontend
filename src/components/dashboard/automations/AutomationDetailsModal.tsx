@@ -121,7 +121,7 @@ export const AutomationDetailsModal = ({
             <div>
               <div className='flex items-center gap-2'>
                 <h2 className='text-base font-semibold text-gray-900'>
-                  Automation #{automation.id}
+                  {automation.name || `Automation #${automation.id}`}
                 </h2>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
@@ -134,7 +134,7 @@ export const AutomationDetailsModal = ({
                 </span>
               </div>
               <p className='text-xs text-gray-500'>
-                {automation.platform} • {automation.target === 'PROJECT' ? 'Long-form Video' : 'Shorts Clip'}
+                {automation.name ? `ID: #${automation.id} • ` : ''}{automation.platform} • {automation.target === 'PROJECT' ? 'Long-form Video' : 'Shorts Clip'}
               </p>
             </div>
           </div>
@@ -174,6 +174,15 @@ export const AutomationDetailsModal = ({
 
           {/* Details Grid */}
           <div className='grid grid-cols-2 gap-4'>
+            {automation.name && (
+              <div className='p-3.5 bg-gray-50 rounded-xl border border-gray-200/70 space-y-1 col-span-2'>
+                <span className='text-[11px] text-gray-500 font-medium'>Automation Name</span>
+                <div className='font-semibold text-gray-900 text-sm'>
+                  {automation.name}
+                </div>
+              </div>
+            )}
+
             <div className='p-3.5 bg-gray-50 rounded-xl border border-gray-200/70 space-y-1'>
               <span className='text-[11px] text-gray-500 font-medium'>Persona</span>
               <div className='font-semibold text-gray-900 flex items-center gap-1.5'>
@@ -216,9 +225,22 @@ export const AutomationDetailsModal = ({
             </div>
 
             <div className='p-3.5 bg-gray-50 rounded-xl border border-gray-200/70 space-y-1'>
-              <span className='text-[11px] text-gray-500 font-medium'>Posting Frequency</span>
-              <div className='font-semibold text-gray-900 capitalize'>
-                {automation.frequency.toLowerCase()}
+              <span className='text-[11px] text-gray-500 font-medium'>Posting Cadence & Max Posts</span>
+              <div className='font-semibold text-gray-900'>
+                {(() => {
+                  const f = (automation.frequency || '').toUpperCase();
+                  let name = automation.frequency;
+                  if (f === 'MULTIPLE_TIMES_DAILY') name = 'Multiple Times Daily';
+                  else if (f === 'MULTIPLE_TIMES_WEEKLY') name = 'Multiple Times Weekly';
+                  else if (f === 'EVERY_X_HOURS') name = 'Every X Hours';
+                  else if (f === 'IMMEDIATE') name = 'Immediate Post';
+                  else if (f === 'DAILY') name = 'Daily Window';
+                  else if (f === 'WEEKLY') name = 'Weekly Release';
+                  else if (f === 'HOURLY') name = 'Hourly Check';
+                  
+                  const count = automation.postsPerPeriod ?? 1;
+                  return `${name} (${count} max post${count > 1 ? 's' : ''}/period)`;
+                })()}
               </div>
             </div>
 

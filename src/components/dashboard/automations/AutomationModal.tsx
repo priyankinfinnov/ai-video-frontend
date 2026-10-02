@@ -54,6 +54,7 @@ export const AutomationModal = ({
   const personas = personasResponse?.data || [];
 
   // Form State
+  const [name, setName] = useState<string>(automation?.name || '');
   const [personaId, setPersonaId] = useState<number>(
     automation?.personaId || fixedPersonaId || 0
   );
@@ -68,6 +69,9 @@ export const AutomationModal = ({
   );
   const [frequency, setFrequency] = useState<AutomationFrequency>(
     automation?.frequency || 'DAILY'
+  );
+  const [postsPerPeriod, setPostsPerPeriod] = useState<number>(
+    automation?.postsPerPeriod ?? 1
   );
   const [timeRangeStart, setTimeRangeStart] = useState<string>(
     automation?.timeRangeStart || '14:00'
@@ -94,22 +98,26 @@ export const AutomationModal = ({
   useEffect(() => {
     if (isOpen) {
       if (automation) {
+        setName(automation.name || '');
         setPersonaId(automation.personaId);
         setPlatform(automation.platform);
         setTarget(automation.target);
         setUploadType(automation.uploadType);
         setFrequency(automation.frequency);
+        setPostsPerPeriod(automation.postsPerPeriod ?? 1);
         setTimeRangeStart(automation.timeRangeStart || '14:00');
         setTimeRangeEnd(automation.timeRangeEnd || '18:00');
         setCooldownHours(automation.cooldownHours ?? 24);
         setIsEnabled(automation.isEnabled ?? true);
       } else {
         const defaultPersona = fixedPersonaId || (personas.length > 0 ? personas[0].id : 0);
+        setName('');
         setPersonaId(defaultPersona);
         setPlatform('YOUTUBE');
         setTarget('PROJECT');
         setUploadType('DRAFT');
         setFrequency('DAILY');
+        setPostsPerPeriod(1);
         setTimeRangeStart('14:00');
         setTimeRangeEnd('18:00');
         setCooldownHours(24);
@@ -140,6 +148,11 @@ export const AutomationModal = ({
       return;
     }
 
+    if (postsPerPeriod < 1) {
+      setErrorMsg('Posts per period must be at least 1.');
+      return;
+    }
+
     // Instagram does not support PROJECT (long-form video) as draft
     if (platform === 'INSTAGRAM' && target === 'PROJECT') {
       setErrorMsg('Instagram publishing only supports 9:16 Shorts Clips (Reels).');
@@ -149,11 +162,13 @@ export const AutomationModal = ({
     try {
       if (automation) {
         const updatePayload: UpdateAutomationRequest = {
+          name: name.trim() || undefined,
           personaId,
           platform,
           target,
           uploadType,
           frequency,
+          postsPerPeriod: Number(postsPerPeriod),
           timeRangeStart,
           timeRangeEnd,
           cooldownHours: Number(cooldownHours),
@@ -162,11 +177,13 @@ export const AutomationModal = ({
         await updateAutomation(updatePayload);
       } else {
         const createPayload: CreateAutomationRequest = {
+          name: name.trim() || undefined,
           personaId,
           platform,
           target,
           uploadType,
           frequency,
+          postsPerPeriod: Number(postsPerPeriod),
           timeRangeStart,
           timeRangeEnd,
           cooldownHours: Number(cooldownHours),
@@ -226,6 +243,24 @@ export const AutomationModal = ({
             </div>
           )}
 
+          {/* Automation Name Field */}
+          <div className='space-y-1.5'>
+            <Label className='text-xs font-semibold text-gray-700'>
+              Automation Name <span className='text-gray-400 font-normal'>(optional)</span>
+            </Label>
+            <Input
+              type='text'
+              placeholder='e.g. US EST Morning Shorts Automation'
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className='text-xs h-9 bg-white'
+              data-testid='automation-name-input'
+            />
+            <p className='text-[11px] text-gray-500'>
+              Friendly name to identify this automation rule in lists and logs.
+            </p>
+          </div>
+
           {/* Persona Selection */}
           <div className='space-y-1.5'>
             <Label className='text-xs font-semibold text-gray-700'>
@@ -278,7 +313,7 @@ export const AutomationModal = ({
                     setPlatform('INSTAGRAM');
                     // Instagram only supports SHORTS_CLIP
                     setTarget('SHORTS_CLIP');
-                    setUploadType('PUBLISH');
+                    setUploadType('ACTUAL_POST');
                   }}
                   className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border text-xs font-medium transition-all ${
                     platform === 'INSTAGRAM'
@@ -325,7 +360,7 @@ export const AutomationModal = ({
             </div>
           </div>
 
-          {/* Upload Mode & Frequency */}
+          {/* Upload Mode, Cadence & Posts Per Period */}
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             {/* Upload Type */}
             <div className='space-y-1.5'>
@@ -336,7 +371,7 @@ export const AutomationModal = ({
                 className='w-full text-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-2xs focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500'
               >
                 <option value='DRAFT'>DRAFT (Private review in Studio)</option>
-                <option value='PUBLISH'>PUBLISH (Direct public posting)</option>
+                <option value='ACTUAL_POST'>ACTUAL_POST (Direct public posting)</option>
               </select>
               <p className='text-[11px] text-gray-500'>
                 {uploadType === 'DRAFT'
@@ -353,12 +388,56 @@ export const AutomationModal = ({
                 onChange={(e) => setFrequency(e.target.value as AutomationFrequency)}
                 className='w-full text-xs rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-2xs focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500'
               >
-                <option value='HOURLY'>Hourly Check</option>
                 <option value='DAILY'>Daily Window (Recommended)</option>
+                <option value='MULTIPLE_TIMES_DAILY'>Multiple Times Daily</option>
                 <option value='WEEKLY'>Weekly Release</option>
+                <option value='MULTIPLE_TIMES_WEEKLY'>Multiple Times Weekly</option>
+                <option value='EVERY_X_HOURS'>Every X Hours</option>
+                <option value='IMMEDIATE'>Immediate Post (When Ready)</option>
+                <option value='HOURLY'>Hourly Check</option>
               </select>
               <p className='text-[11px] text-gray-500'>
                 Posting cycles check eligible completed projects or clips.
+              </p>
+            </div>
+          </div>
+
+          {/* Posts Per Period Input & Cooldown Grid */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 items-start'>
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-semibold text-gray-700'>
+                Max Posts Per Period
+              </Label>
+              <Input
+                type='number'
+                min={1}
+                max={100}
+                value={postsPerPeriod}
+                onChange={(e) => setPostsPerPeriod(Math.max(1, Number(e.target.value)))}
+                className='text-xs h-9'
+                required
+                data-testid='posts-per-period-input'
+              />
+              <p className='text-[11px] text-gray-500'>
+                Maximum number of automated posts created in each frequency cycle.
+              </p>
+            </div>
+
+            <div className='space-y-1.5'>
+              <Label className='text-xs font-semibold text-gray-700'>
+                Cooldown Period (Hours)
+              </Label>
+              <Input
+                type='number'
+                min={1}
+                max={720}
+                value={cooldownHours}
+                onChange={(e) => setCooldownHours(Number(e.target.value))}
+                className='text-xs h-9'
+                required
+              />
+              <p className='text-[11px] text-gray-500'>
+                Minimum elapsed hours required between consecutive uploads.
               </p>
             </div>
           </div>
@@ -398,45 +477,25 @@ export const AutomationModal = ({
             </div>
           </div>
 
-          {/* Cooldown Hours & Active Switch */}
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 items-center'>
-            <div className='space-y-1.5'>
-              <Label className='text-xs font-semibold text-gray-700'>
-                Cooldown Period (Hours)
-              </Label>
-              <Input
-                type='number'
-                min={1}
-                max={720}
-                value={cooldownHours}
-                onChange={(e) => setCooldownHours(Number(e.target.value))}
-                className='text-xs h-9'
-                required
-              />
-              <p className='text-[11px] text-gray-500'>
-                Minimum elapsed hours required between consecutive uploads.
-              </p>
-            </div>
-
-            <div className='pt-2 sm:pt-0'>
-              <div className='flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-200'>
-                <div>
-                  <div className='text-xs font-semibold text-gray-900'>Active Status</div>
-                  <div className='text-[11px] text-gray-500'>
-                    {isEnabled ? 'Automation is active' : 'Automation is paused'}
-                  </div>
+          {/* Active Status Switch */}
+          <div className='pt-1'>
+            <div className='flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-200'>
+              <div>
+                <div className='text-xs font-semibold text-gray-900'>Active Status</div>
+                <div className='text-[11px] text-gray-500'>
+                  {isEnabled ? 'Automation is active' : 'Automation is paused'}
                 </div>
-
-                <label className='relative inline-flex items-center cursor-pointer'>
-                  <input
-                    type='checkbox'
-                    checked={isEnabled}
-                    onChange={(e) => setIsEnabled(e.target.checked)}
-                    className='sr-only peer'
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                </label>
               </div>
+
+              <label className='relative inline-flex items-center cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={isEnabled}
+                  onChange={(e) => setIsEnabled(e.target.checked)}
+                  className='sr-only peer'
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
             </div>
           </div>
 

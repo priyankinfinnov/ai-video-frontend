@@ -79,7 +79,7 @@ AI-vid-frontend/
 | **E2E-08** | Projects & Details Workspace | Navigates to `/dashboard/projects`, opens project detailed view (`/dashboard/projects/:id`), switches across overview, script iteration logs, shorts clips, and video player tabs. Verifies script and published link updates. |
 | **E2E-09** | Direct Upload Modals | Triggers `ProjectUploadModal` and `ClipUploadModal`, fills metadata/file paths, verifies upload submission and list refresh. |
 | **E2E-10** | Shorts Clips & Status Editing | Opens shorts clips view, opens `ShortClipModal` or `ShortsProjectEditModal`, edits status, verifies status badge update. |
-| **E2E-11** | Automations & Social Integrations | Navigates to `/dashboard/automations`, creates/edits automation trigger configurations, verifies persona social integration tab connections. |
+| **E2E-11** | Automations & Social Integrations | Navigates to `/dashboard/automations`, creates/edits automation trigger configurations (verifying `name`, `postsPerPeriod`, `uploadType`, and multi-frequency cadence options), verifies persona social integration tab connections. |
 | **E2E-12** | Settings & Team Management | Navigates to `/dashboard/settings`, verifies user profile info, inspects team details, tests member role updates and invitation dialogs. |
 
 ---

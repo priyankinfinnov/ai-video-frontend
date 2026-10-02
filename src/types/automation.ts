@@ -1,7 +1,15 @@
 export type AutomationPlatform = 'YOUTUBE' | 'INSTAGRAM';
 export type AutomationTarget = 'PROJECT' | 'SHORTS_CLIP';
-export type AutomationUploadType = 'DRAFT' | 'PUBLISH';
-export type AutomationFrequency = 'HOURLY' | 'DAILY' | 'WEEKLY';
+export type AutomationUploadType = 'DRAFT' | 'ACTUAL_POST' | 'PUBLISH';
+export type AutomationFrequency =
+  | 'IMMEDIATE'
+  | 'HOURLY'
+  | 'EVERY_X_HOURS'
+  | 'DAILY'
+  | 'WEEKLY'
+  | 'MULTIPLE_TIMES_DAILY'
+  | 'MULTIPLE_TIMES_WEEKLY'
+  | string;
 export type AutomationLastRunStatus =
   | 'DRAFT'
   | 'PUBLISHED'
@@ -12,6 +20,7 @@ export type AutomationLastRunStatus =
 
 export interface Automation {
   id: number;
+  name?: string | null;
   teamId?: number;
   personaId: number;
   platform: AutomationPlatform;
@@ -22,6 +31,7 @@ export interface Automation {
   timeRangeStart: string; // "HH:mm" (24h)
   timeRangeEnd: string; // "HH:mm" (24h)
   cooldownHours: number; // integer >= 1
+  postsPerPeriod?: number; // max number of posts in frequency cycle (default 1)
   scheduledPostAt?: string | null;
   lastRunAt?: string | null;
   lastRunStatus?: AutomationLastRunStatus | null;
@@ -35,6 +45,7 @@ export interface Automation {
 }
 
 export interface CreateAutomationRequest {
+  name?: string;
   teamId?: number;
   personaId: number;
   platform: AutomationPlatform;
@@ -45,10 +56,12 @@ export interface CreateAutomationRequest {
   timeRangeStart: string;
   timeRangeEnd: string;
   cooldownHours: number;
+  postsPerPeriod?: number;
   isEnabled: boolean;
 }
 
 export interface UpdateAutomationRequest {
+  name?: string;
   teamId?: number;
   personaId?: number;
   platform?: AutomationPlatform;
@@ -59,6 +72,7 @@ export interface UpdateAutomationRequest {
   timeRangeStart?: string;
   timeRangeEnd?: string;
   cooldownHours?: number;
+  postsPerPeriod?: number;
   isEnabled?: boolean;
 }
 

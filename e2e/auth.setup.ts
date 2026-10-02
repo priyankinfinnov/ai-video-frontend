@@ -27,10 +27,10 @@ export async function getTestUserAuthToken(): Promise<string> {
       return data.token;
     }
   } catch (err) {
-    console.warn('[auth.setup] Login fetch failed, attempting signup first:', err);
+    console.warn('[auth.setup] Initial login fetch failed:', err);
   }
 
-  // Ensure test user is registered & verified on test backend
+  // Ensure test user exists & is verified
   await ensureTestUserExists();
 
   try {
@@ -47,7 +47,7 @@ export async function getTestUserAuthToken(): Promise<string> {
       return data.token;
     }
   } catch (err) {
-    console.warn('[auth.setup] Fallback to default test token:', err);
+    console.warn('[auth.setup] Fallback login failed:', err);
   }
 
   return AUTH_TOKEN_VALID;
@@ -89,9 +89,17 @@ export async function ensureTestUserExists() {
 }
 
 export async function loginTestUser(page: Page) {
-  // Use direct cookie injection to bypass login rate limiter and isolate tests
+  // Try direct cookie injection first
   await loginWithToken(page);
   await page.goto('/dashboard');
   await page.waitForLoadState('domcontentloaded');
+
+  // If redirected to /login, submit credentials through login form
+  if (page.url().includes('/login')) {
+    await page.locator('input[type="email"], input[name="email"]').first().fill(TEST_USER.email);
+    await page.locator('input[type="password"], input[name="password"]').first().fill(TEST_USER.password);
+    await page.getByRole('button', { name: /Sign In|Log In/i }).click();
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+  }
 }
 

@@ -22,16 +22,6 @@ export default defineConfig({
       url: 'http://localhost:6003',
       reuseExistingServer: true,
       timeout: 60000,
-      env: {
-        NODE_ENV: 'test',
-        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6011',
-      },
-    },
-    {
-      command: 'npm run test:api',
-      url: 'http://localhost:6011/health',
-      reuseExistingServer: true,
-      timeout: 60000,
     },
   ],
   projects: [

@@ -181,6 +181,25 @@ export const AutomationsDataTable = ({
         },
       },
       {
+        accessorKey: 'name',
+        header: 'Automation Name',
+        cell: ({ row }) => {
+          const auto = row.original;
+          return (
+            <div className='flex flex-col min-w-[130px]'>
+              <span className='font-semibold text-xs text-gray-900 truncate' title={auto.name || `Automation #${auto.id}`}>
+                {auto.name || `Automation #${auto.id}`}
+              </span>
+              {auto.name && (
+                <span className='text-[10px] text-gray-400 font-mono'>
+                  ID: #{auto.id}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: 'platform',
         header: 'Platform',
         cell: ({ row }) => {
@@ -264,6 +283,18 @@ export const AutomationsDataTable = ({
         header: 'Time Window & Cadence',
         cell: ({ row }) => {
           const auto = row.original;
+          const freqUpper = (auto.frequency || '').toUpperCase();
+          let freqLabel = auto.frequency;
+          if (freqUpper === 'MULTIPLE_TIMES_DAILY') freqLabel = 'Multiple/Day';
+          else if (freqUpper === 'MULTIPLE_TIMES_WEEKLY') freqLabel = 'Multiple/Week';
+          else if (freqUpper === 'EVERY_X_HOURS') freqLabel = 'Every X Hours';
+          else if (freqUpper === 'IMMEDIATE') freqLabel = 'Immediate';
+          else if (freqUpper === 'DAILY') freqLabel = 'Daily';
+          else if (freqUpper === 'WEEKLY') freqLabel = 'Weekly';
+          else if (freqUpper === 'HOURLY') freqLabel = 'Hourly';
+
+          const postsText = auto.postsPerPeriod && auto.postsPerPeriod > 1 ? ` (${auto.postsPerPeriod} posts)` : '';
+
           return (
             <div className='flex items-center gap-1 text-xs text-gray-700 font-medium'>
               <Clock className='w-3 h-3 text-gray-400 shrink-0' />
@@ -271,7 +302,7 @@ export const AutomationsDataTable = ({
                 {auto.timeRangeStart} - {auto.timeRangeEnd}
               </span>
               <span className='text-[10px] text-gray-500 uppercase ml-1 bg-gray-100 px-1.5 py-0.5 rounded'>
-                {auto.frequency}
+                {freqLabel}{postsText}
               </span>
             </div>
           );

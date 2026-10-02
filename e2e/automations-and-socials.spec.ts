@@ -42,6 +42,10 @@ test.describe('Social Integrations & Publishing Automations E2E', () => {
       page.getByRole('heading', { name: 'Create Publishing Automation' })
     ).toBeVisible();
 
+    // Verify Automation Name & Posts Per Period inputs
+    await expect(page.getByTestId('automation-name-input')).toBeVisible();
+    await expect(page.getByTestId('posts-per-period-input')).toBeVisible();
+
     // Verify Platform buttons
     await expect(page.getByRole('button', { name: 'YouTube' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Instagram' })).toBeVisible();
@@ -114,8 +118,21 @@ test.describe('Social Integrations & Publishing Automations E2E', () => {
   test('E2E-AUTO-05: OAuth redirect to /personas/:id with connected=youtube renders successfully without ErrorPage', async ({
     page,
   }) => {
-    // Navigate directly to OAuth callback redirect target
-    await page.goto('/personas/1?tab=automations&connected=youtube&channel=James%20-%20The%20Modern%20Stoic');
+    // Go to personas page first to find an active persona ID
+    await page.goto('/dashboard/personas');
+    await page.waitForSelector('table');
+    const firstRowLink = page.locator('tbody tr').first().locator('a').first();
+
+    let targetUrl = '/dashboard/personas/1?tab=automations&connected=youtube&channel=James%20-%20The%20Modern%20Stoic';
+    if (await firstRowLink.isVisible()) {
+      const href = await firstRowLink.getAttribute('href');
+      if (href) {
+        targetUrl = `${href}?tab=automations&connected=youtube&channel=James%20-%20The%20Modern%20Stoic`;
+      }
+    }
+
+    // Navigate to OAuth callback redirect target
+    await page.goto(targetUrl);
 
     // Should not hit ErrorPage
     await expect(page.getByText('404')).not.toBeVisible();
@@ -129,7 +146,7 @@ test.describe('Social Integrations & Publishing Automations E2E', () => {
     await expect(integrationsTab).toBeVisible();
     await integrationsTab.click();
 
-    // Verify YouTube card renders without crashing on startsWith
+    // Verify YouTube card renders without crashing
     await expect(page.getByRole('heading', { name: 'YouTube Channel' })).toBeVisible();
   });
 });
