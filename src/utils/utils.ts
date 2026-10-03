@@ -192,8 +192,10 @@ export const removeIdAndGiveRest = <T extends Record<string, unknown>>(
   return rest;
 };
 
-export const getCreatedDate = (dateStr: string) => {
+export const getCreatedDate = (dateStr?: string | null) => {
+  if (!dateStr) return '—';
   const pastDate = new Date(dateStr);
+  if (isNaN(pastDate.getTime())) return '—';
   const timeDifference = new Date().getTime() - pastDate.getTime();
   if (timeDifference < 86400000) {
     // 86400000 milliseconds = 1 day

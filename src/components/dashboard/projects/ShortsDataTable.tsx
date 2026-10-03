@@ -157,11 +157,32 @@ export const ShortsDataTable = ({
       {
         accessorKey: 'createdAt',
         header: 'Created',
-        cell: ({ row }) => (
-          <span className='text-xs text-gray-500 whitespace-nowrap'>
-            {getCreatedDate(row.getValue('createdAt'))}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const createdAt = row.getValue('createdAt') as string | undefined;
+          return (
+            <span
+              className='text-xs text-gray-500 whitespace-nowrap'
+              title={createdAt ? new Date(createdAt).toLocaleString() : undefined}
+            >
+              {getCreatedDate(createdAt)}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: 'Last Updated',
+        cell: ({ row }) => {
+          const updatedAt = row.getValue('updatedAt') as string | undefined;
+          return (
+            <span
+              className='text-xs text-gray-500 whitespace-nowrap'
+              title={updatedAt ? new Date(updatedAt).toLocaleString() : undefined}
+            >
+              {getCreatedDate(updatedAt)}
+            </span>
+          );
+        },
       },
     ],
     [onDelete]
