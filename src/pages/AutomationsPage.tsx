@@ -451,8 +451,11 @@ export const AutomationsPage = () => {
                   <option value='ALL'>All Statuses</option>
                   <option value='SUCCESS'>Success</option>
                   <option value='FAILED'>Failed</option>
+                  <option value='SKIPPED'>All Skipped</option>
+                  <option value='SKIPPED_COOLDOWN'>Skipped (Cooldown)</option>
                   <option value='SKIPPED_NO_ASSETS'>Skipped (No Assets)</option>
-                  <option value='PENDING'>Pending / In Progress</option>
+                  <option value='SKIPPED_QUOTA'>Skipped (Quota Exceeded)</option>
+                  <option value='IN_PROGRESS'>Pending / In Progress</option>
                 </select>
               </div>
             </div>

@@ -88,9 +88,12 @@ export interface TriggerAutomationResponse {
 export type AutomationRunStatus =
   | 'SUCCESS'
   | 'FAILED'
+  | 'SKIPPED'
   | 'SKIPPED_NO_ASSETS'
-  | 'PENDING'
+  | 'SKIPPED_COOLDOWN'
+  | 'SKIPPED_QUOTA'
   | 'IN_PROGRESS'
+  | 'PENDING'
   | string;
 
 export interface AutomationRun {

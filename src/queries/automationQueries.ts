@@ -150,7 +150,10 @@ export const useGetAutomationRunsQuery = (params: import('@/types/automation').G
       if (platform) query.append('platform', platform);
       if (targetType) query.append('targetType', targetType);
       if (uploadType) query.append('uploadType', uploadType);
-      if (status) query.append('status', status);
+      if (status) {
+        const normalizedStatus = status === 'PENDING' ? 'IN_PROGRESS' : status;
+        query.append('status', normalizedStatus);
+      }
       if (search) query.append('search', search);
       query.append('page', String(page));
       query.append('limit', String(limit));
